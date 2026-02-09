@@ -237,7 +237,10 @@ class AuthController extends Controller
 
     public function getUser(Request $request)
     {
-        $user = $request->user();
+        $userRequest = $request->user();
+
+        $user = UserService::getOneById($userRequest->id);
+
         return response([
             'message' => 'Usuario obtenido exitosamente',
             'data' => $user,

@@ -34,6 +34,21 @@ class UserService
     public static function getOneById($id)
     {
         $user = User::find($id);
+
+        switch ($user->id_rol) {
+            case '00001':
+                $user = User::join('clientes', 'users.id', '=', 'clientes.id_user')->where('users.id', $id)->first();
+                break;
+
+            case '00002':
+                $user = User::join('operativos', 'users.id', '=', 'operativos.id_user')->where('users.id', $id)->first();
+                break;
+
+            case '00003':
+                $user = User::join('admins', 'users.id', '=', 'admins.id_user')->where('users.id', $id)->first();
+                break;
+
+        }
         return $user;
     }
     public static function update($id, $data)

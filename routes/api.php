@@ -20,6 +20,8 @@ use App\Http\Controllers\ServicioController;
 use App\Http\Controllers\ServicioTipoEquipoController;
 use App\Http\Controllers\ServicioMaterialController;
 use App\Http\Controllers\ServicioEspecialidadController;
+use App\Http\Controllers\OrdenController;
+use App\Http\Controllers\OrdenServicioController;
 
 // rutas para la autenticacion
 Route::post('/register', [AuthController::class, 'register']);
@@ -31,7 +33,6 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/send-confirmation-email', [AuthController::class, 'sendConfirmationEmail']);
 
 Route::get('/tipos-servicios', [TipoServicioController::class, 'index']);
-
 
 // proteger con sanctum
 Route::middleware('auth:sanctum')->group(function () {
@@ -55,12 +56,15 @@ Route::middleware('auth:sanctum')->group(function () {
         'servicios-tipos-equipos' => ServicioTipoEquipoController::class,
         'servicios-materiales' => ServicioMaterialController::class,
         'servicios-especialidades' => ServicioEspecialidadController::class,
+        'ordenes' => OrdenController::class,
+        'ordenes-servicios' => OrdenServicioController::class,
     ]);
 
     Route::get('/tipos-servicios/{id}', [TipoServicioController::class, 'show']);
     Route::post('/tipos-servicios', [TipoServicioController::class, 'store']);
     Route::put('/tipos-servicios/{id}', [TipoServicioController::class, 'update']);
     Route::delete('/tipos-servicios/{id}', [TipoServicioController::class, 'destroy']);
+    Route::get('/catalogo-servicios', [ServicioController::class, 'catalogoServicios']);
 
     Route::get('/menu', [AuthController::class, 'getMenu']);
     Route::get('/menu/{id_padre}', [AuthController::class, 'getMenuByPadre']);

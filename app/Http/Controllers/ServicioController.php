@@ -248,4 +248,36 @@ class ServicioController extends Controller
         }
         return $this->successResponse($servicio, 'Servicio eliminado correctamente');
     }
+
+    public function catalogoServicios()
+    {
+        $servicios = ServicioService::getAll();
+        $catalogo = [];
+
+        // crear catalogo por tipo de servicio
+        // foreach ($servicios as $servicio) {
+        //     $catalogo[$servicio->id_tipo_servicio][] = $servicio;
+        // }
+
+        foreach ($servicios as $servicio) {
+            $id_tipo_servicio = $servicio->id_tipo_servicio;
+            $tipo_servicio = $servicio->nombre_tipo_servicio;
+
+            if (!isset($catalogo[$id_tipo_servicio])) {
+                $catalogo[$id_tipo_servicio] = [
+                    'id_tipo_servicio' => $id_tipo_servicio,
+                    'tipo_servicio' => $tipo_servicio,
+                    'servicios' => []
+                ];
+            }
+
+            unset($servicio->id_tipo_servicio);
+            unset($servicio->nombre_tipo_servicio);
+            $catalogo[$id_tipo_servicio]['servicios'][] = $servicio;
+        }
+
+        //dd($catalogo);
+
+        return $this->successResponse($catalogo, 'Servicios obtenidos correctamente');
+    }
 }
