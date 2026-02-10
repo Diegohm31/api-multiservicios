@@ -8,7 +8,11 @@ class OrdenService
 {
     public static function getAll()
     {
-        $ordenes = Orden::get();
+        //join con tabla clientes para obtener el nombre y cedula del cliente
+        $ordenes = DB::table('ordenes')
+            ->join('clientes', 'ordenes.id_cliente', '=', 'clientes.id_cliente')
+            ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula')
+            ->get();
         return $ordenes;
     }
 
@@ -54,5 +58,11 @@ class OrdenService
         $orden->delete();
         DB::commit();
         return $orden;
+    }
+
+    public static function getOrdenesByCliente($id_cliente)
+    {
+        $ordenes = Orden::where('id_cliente', $id_cliente)->get();
+        return $ordenes;
     }
 }

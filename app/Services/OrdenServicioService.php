@@ -55,4 +55,15 @@ class OrdenServicioService
         DB::commit();
         return $orden;
     }
+
+    public static function getOneByOrden($id_orden)
+    {
+        //join con la tabla servicios para obtener el nombre del servicio
+        $servicios = DB::table('ordenes_servicios')
+            ->join('servicios', 'ordenes_servicios.id_servicio', '=', 'servicios.id_servicio')
+            ->where('ordenes_servicios.id_orden', $id_orden)
+            ->select('ordenes_servicios.*', 'servicios.nombre')
+            ->get();
+        return $servicios;
+    }
 }

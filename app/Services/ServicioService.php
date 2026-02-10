@@ -70,4 +70,10 @@ class ServicioService
         return $servicio;
     }
 
+    public static function esTabulado($id)
+    {
+        $servicio = Servicio::where('is_deleted', false)->find($id);
+        return $servicio->servicio_tabulado;
+    }
+
 }

@@ -2,17 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ServicioService;
 use Illuminate\Http\Request;
 use App\Services\OrdenService;
 use App\Services\OrdenServicioService;
+use App\Models\Cliente;
+use App\Services\ServicioMaterialService;
+use App\Services\ServicioTipoEquipoService;
+use App\Services\ServicioEspecialidadService;
+use App\Services\MailerService;
+use App\Models\User;
+use App\Services\ClienteService;
+use App\Services\NotificacionService;
 
 class OrdenController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $ordenes = OrdenService::getAll();
+        $user = $request->user();
+        //$ordenes = collect([]); // Inicializamos para evitar el error de variable no asignada
+
+        if ($user->id_rol == 00003) {
+            $ordenes = OrdenService::getAll();
+        }
+
+        if ($user->id_rol == 00001) {
+            $cliente = Cliente::where('id_user', $user->id)->first();
+            $ordenes = OrdenService::getOrdenesByCliente($cliente->id_cliente);
+        }
+
         return $this->successResponse(
-            $ordenes,
+            [
+                'id_rol' => $user->id_rol,
+                'ordenes' => $ordenes
+            ],
             $ordenes->isEmpty() ? 'No se encontraron ordenes' : 'Ordenes obtenidas correctamente'
         );
     }
@@ -68,13 +91,36 @@ class OrdenController extends Controller
         return $this->successResponse($orden, 'Orden creada correctamente');
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        $user = $request->user();
+        $detalle = ($request->has('detalle')) ? $request->detalle : false;
+
         $orden = OrdenService::getOne($id);
         if (!$orden) {
             return $this->errorResponse('Orden no encontrada', 404);
         }
-        return $this->successResponse($orden, 'Orden obtenida correctamente');
+
+        $orden->array_servicios = OrdenServicioService::getOneByOrden($id);
+
+        if ($detalle) {
+            foreach ($orden->array_servicios as $servicio) {
+                $servicio_tabulado = ServicioService::esTabulado($servicio->id_servicio);
+                if ($servicio_tabulado) {
+                    $servicio->array_materiales = ServicioMaterialService::getOneByServicio($servicio->id_servicio);
+                    $servicio->array_tipos_equipos = ServicioTipoEquipoService::getOneByServicio($servicio->id_servicio);
+                    $servicio->array_especialidades = ServicioEspecialidadService::getOneByServicio($servicio->id_servicio);
+                }
+            }
+        }
+
+        return $this->successResponse(
+            [
+                'id_rol' => $user->id_rol,
+                'orden' => $orden
+            ],
+            'Orden obtenida correctamente'
+        );
     }
     public function update(Request $request, $id)
     {
@@ -114,5 +160,81 @@ class OrdenController extends Controller
             return $this->errorResponse('Orden no encontrada', 404);
         }
         return $this->successResponse($orden, 'Orden eliminada correctamente');
+    }
+
+    public function cancelarOrden(Request $request, $id)
+    {
+        $request->validate([
+            'observaciones' => 'nullable|string|max:1000',
+        ]);
+
+        $data = $request->all();
+
+        $orden = OrdenService::getOne($id);
+        if (!$orden) {
+            return $this->errorResponse('Orden no encontrada', 404);
+        }
+        $orden->estado = 'Cancelada';
+        $orden->fecha_validacion = date('Y-m-d');
+        // si hay observaciones agregarla, si no dejar null
+        $orden->observaciones = $data['observaciones'] ?? null;
+        $orden->save();
+
+        //obtener enviar correo al cliente notificando la accion
+        $cliente = ClienteService::getOne($orden->id_cliente);
+        $user = User::where('id_cliente', $cliente->id_cliente)->first();
+
+        MailerService::enviarCorreo([
+            'to' => [$user->email],
+            'cc' => [],
+            'bcc' => [],
+        ], 'Orden cancelada', 'emails.cancelacion_orden', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'observaciones' => $orden->observaciones]);
+
+        //grabar registro en la tabla notificaciones
+        $notificacion = NotificacionService::store([
+            'id_user' => $user->id,
+            'asunto' => 'Orden cancelada',
+            'fecha_envio' => date('Y-m-d H:i:s'),
+        ]);
+
+
+        return $this->successResponse($orden, 'Orden cancelada correctamente');
+    }
+
+    public function aceptarOrden(Request $request, $id)
+    {
+        $request->validate([
+            'observaciones' => 'nullable|string|max:1000',
+        ]);
+
+        $data = $request->all();
+
+        $orden = OrdenService::getOne($id);
+        if (!$orden) {
+            return $this->errorResponse('Orden no encontrada', 404);
+        }
+        $orden->estado = 'Aceptada';
+        $orden->fecha_validacion = date('Y-m-d');
+        $orden->observaciones = $data['observaciones'] ?? null;
+        $orden->save();
+
+        //obtener enviar correo al cliente notificando la accion
+        $cliente = ClienteService::getOne($orden->id_cliente);
+        $user = User::where('id_cliente', $cliente->id_cliente)->first();
+
+        MailerService::enviarCorreo([
+            'to' => [$user->email],
+            'cc' => [],
+            'bcc' => [],
+        ], 'Orden aceptada', 'emails.aceptacion_orden', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'observaciones' => $orden->observaciones]);
+
+        //grabar registro en la tabla notificaciones
+        $notificacion = NotificacionService::store([
+            'id_user' => $user->id,
+            'asunto' => 'Orden aceptada',
+            'fecha_envio' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->successResponse($orden, 'Orden aceptada correctamente');
     }
 }

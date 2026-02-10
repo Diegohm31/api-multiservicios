@@ -22,6 +22,7 @@ use App\Http\Controllers\ServicioMaterialController;
 use App\Http\Controllers\ServicioEspecialidadController;
 use App\Http\Controllers\OrdenController;
 use App\Http\Controllers\OrdenServicioController;
+use App\Http\Controllers\PresupuestoController;
 
 // rutas para la autenticacion
 Route::post('/register', [AuthController::class, 'register']);
@@ -38,6 +39,9 @@ Route::get('/tipos-servicios', [TipoServicioController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // Route::put('/clientes/cambiar-estado/{id_cliente}', [ClienteController::class, 'cambiarEstado']);
+
+    Route::put('/ordenes/{id}/cancelar', [OrdenController::class, 'cancelarOrden']);
+    Route::put('/ordenes/{id}/aceptar', [OrdenController::class, 'aceptarOrden']);
 
     Route::apiResources([
         'clientes' => ClienteController::class,
@@ -58,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'servicios-especialidades' => ServicioEspecialidadController::class,
         'ordenes' => OrdenController::class,
         'ordenes-servicios' => OrdenServicioController::class,
+        'presupuestos' => PresupuestoController::class,
     ]);
 
     Route::get('/tipos-servicios/{id}', [TipoServicioController::class, 'show']);
