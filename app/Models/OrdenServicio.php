@@ -32,13 +32,12 @@ class OrdenServicio extends ApiModel
         'id_servicio',
         'descripcion',
         'cantidad',
-        'precio_materiales',
-        'precio_tipos_equipos',
-        'precio_mano_obra',
-        'precio_general',
+        'precio_materiales_unitario',
+        'precio_tipos_equipos_unitario',
+        'precio_mano_obra_unitario',
+        'precio_general_unitario',
         'descuento',
         'precio_a_pagar',
-        'pdf_peritaje',
     ];
 }
 

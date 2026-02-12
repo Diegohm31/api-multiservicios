@@ -23,13 +23,12 @@ class OrdenServicioController extends Controller
             'id_servicio' => 'required|string|max:100',
             'descripcion' => 'nullable|string|max:1000',
             'cantidad' => 'required|numeric',
-            'precio_materiales' => 'nullable|numeric',
-            'precio_tipos_equipos' => 'nullable|numeric',
-            'precio_mano_obra' => 'nullable|numeric',
-            'precio_general' => 'nullable|numeric',
+            'precio_materiales_unitario' => 'nullable|numeric',
+            'precio_tipos_equipos_unitario' => 'nullable|numeric',
+            'precio_mano_obra_unitario' => 'nullable|numeric',
+            'precio_general_unitario' => 'nullable|numeric',
             'descuento' => 'nullable|numeric',
             'precio_a_pagar' => 'nullable|numeric',
-            'pdf_peritaje' => 'nullable|string|max:1000',
         ]);
 
         $data = $request->all();
@@ -59,17 +58,16 @@ class OrdenServicioController extends Controller
             'id_servicio' => 'nullable|string|max:100',
             'descripcion' => 'nullable|string|max:1000',
             'cantidad' => 'nullable|numeric',
-            'precio_materiales' => 'nullable|numeric',
-            'precio_tipos_equipos' => 'nullable|numeric',
-            'precio_mano_obra' => 'nullable|numeric',
-            'precio_general' => 'nullable|numeric',
+            'precio_materiales_unitario' => 'nullable|numeric',
+            'precio_tipos_equipos_unitario' => 'nullable|numeric',
+            'precio_mano_obra_unitario' => 'nullable|numeric',
+            'precio_general_unitario' => 'nullable|numeric',
             'descuento' => 'nullable|numeric',
             'precio_a_pagar' => 'nullable|numeric',
-            'pdf_peritaje' => 'nullable|string|max:1000',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('id_orden') && !$request->has('id_servicio') && !$request->has('descripcion') && !$request->has('cantidad') && !$request->has('precio_materiales') && !$request->has('precio_equipos') && !$request->has('precio_mano_obra') && !$request->has('precio_general') && !$request->has('descuento') && !$request->has('precio_a_pagar') && !$request->has('pdf_peritaje')) {
+        if (!$request->has('id_orden') && !$request->has('id_servicio') && !$request->has('descripcion') && !$request->has('cantidad') && !$request->has('precio_materiales_unitario') && !$request->has('precio_tipos_equipos_unitario') && !$request->has('precio_mano_obra_unitario') && !$request->has('precio_general_unitario') && !$request->has('descuento') && !$request->has('precio_a_pagar')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();

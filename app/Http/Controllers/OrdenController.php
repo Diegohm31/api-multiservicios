@@ -13,7 +13,9 @@ use App\Services\ServicioEspecialidadService;
 use App\Services\MailerService;
 use App\Models\User;
 use App\Services\ClienteService;
+use App\Services\PresupuestoService;
 use App\Services\NotificacionService;
+use Illuminate\Support\Facades\Storage;
 
 class OrdenController extends Controller
 {
@@ -74,10 +76,10 @@ class OrdenController extends Controller
             ];
 
             if ($servicio['servicio_tabulado'] == 1) {
-                $dataServicio['precio_materiales'] = $servicio['precio_materiales'];
-                $dataServicio['precio_tipos_equipos'] = $servicio['precio_tipos_equipos'];
-                $dataServicio['precio_mano_obra'] = $servicio['precio_mano_obra'];
-                $dataServicio['precio_general'] = $servicio['precio_general'];
+                $dataServicio['precio_materiales_unitario'] = $servicio['precio_materiales_unitario'];
+                $dataServicio['precio_tipos_equipos_unitario'] = $servicio['precio_tipos_equipos_unitario'];
+                $dataServicio['precio_mano_obra_unitario'] = $servicio['precio_mano_obra_unitario'];
+                $dataServicio['precio_general_unitario'] = $servicio['precio_general_unitario'];
                 $dataServicio['descuento'] = $servicio['descuento'];
                 $dataServicio['precio_a_pagar'] = $servicio['precio_a_pagar'];
             }
@@ -102,6 +104,10 @@ class OrdenController extends Controller
         }
 
         $orden->array_servicios = OrdenServicioService::getOneByOrden($id);
+
+        if ($orden->id_presupuesto) {
+            $orden->presupuesto = PresupuestoService::getOne($orden->id_presupuesto);
+        }
 
         if ($detalle) {
             foreach ($orden->array_servicios as $servicio) {
@@ -138,10 +144,11 @@ class OrdenController extends Controller
             'fecha_validacion' => 'nullable|string|max:100',
             'observaciones' => 'nullable|string|max:1000',
             'calificacion' => 'nullable|int|max:5',
+            'pdf_peritaje' => 'nullable|string|max:1000',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('id_cliente') && !$request->has('id_admin') && !$request->has('id_presupuesto') && !$request->has('direccion') && !$request->has('estado') && !$request->has('fecha_inicio') && !$request->has('fecha_fin') && !$request->has('fecha_inicio_real') && !$request->has('fecha_fin_real') && !$request->has('fecha_emision') && !$request->has('fecha_validacion') && !$request->has('observaciones') && !$request->has('calificacion')) {
+        if (!$request->has('id_cliente') && !$request->has('id_admin') && !$request->has('id_presupuesto') && !$request->has('direccion') && !$request->has('estado') && !$request->has('fecha_inicio') && !$request->has('fecha_fin') && !$request->has('fecha_inicio_real') && !$request->has('fecha_fin_real') && !$request->has('fecha_emision') && !$request->has('fecha_validacion') && !$request->has('observaciones') && !$request->has('calificacion') && !$request->has('pdf_peritaje')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();
@@ -180,9 +187,10 @@ class OrdenController extends Controller
         $orden->observaciones = $data['observaciones'] ?? null;
         $orden->save();
 
-        //obtener enviar correo al cliente notificando la accion
+        //obtener id_cliente para enviar correo notificando la accion
         $cliente = ClienteService::getOne($orden->id_cliente);
-        $user = User::where('id_cliente', $cliente->id_cliente)->first();
+        $id_user_cliente = $cliente->id_user;
+        $user = User::where('id', $id_user_cliente)->first();
 
         MailerService::enviarCorreo([
             'to' => [$user->email],
@@ -218,9 +226,10 @@ class OrdenController extends Controller
         $orden->observaciones = $data['observaciones'] ?? null;
         $orden->save();
 
-        //obtener enviar correo al cliente notificando la accion
+        //obtener id_cliente para enviar correo notificando la accion
         $cliente = ClienteService::getOne($orden->id_cliente);
-        $user = User::where('id_cliente', $cliente->id_cliente)->first();
+        $id_user_cliente = $cliente->id_user;
+        $user = User::where('id', $id_user_cliente)->first();
 
         MailerService::enviarCorreo([
             'to' => [$user->email],
@@ -236,5 +245,35 @@ class OrdenController extends Controller
         ]);
 
         return $this->successResponse($orden, 'Orden aceptada correctamente');
+    }
+
+    public function subirPeritaje(Request $request, $id)
+    {
+        $request->validate([
+            'pdf_peritaje' => 'required|file|mimes:pdf|max:10240', // max 10MB
+        ]);
+
+        $orden = OrdenService::getOne($id);
+        if (!$orden) {
+            return $this->errorResponse('Orden no encontrada', 404);
+        }
+
+        if ($request->hasFile('pdf_peritaje')) {
+            // Eliminar archivo anterior si existe
+            if ($orden->pdf_peritaje) {
+                Storage::disk('public')->delete($orden->pdf_peritaje);
+            }
+
+            $file = $request->file('pdf_peritaje');
+            $filename = 'peritaje_' . $orden->id_orden . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('peritajes', $filename, 'public');
+
+            $orden->pdf_peritaje = $path;
+            $orden->save();
+
+            return $this->successResponse($orden, 'Archivo de peritaje subido correctamente');
+        }
+
+        return $this->errorResponse('No se pudo subir el archivo', 400);
     }
 }

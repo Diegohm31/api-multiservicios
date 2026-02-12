@@ -10,6 +10,10 @@ use App\Services\OrdenServicioService;
 use App\Services\OrdenServicioMaterialService;
 use App\Services\OrdenServicioTipoEquipoService;
 use App\Services\OrdenServicioEspecialidadService;
+use App\Services\ClienteService;
+use App\Models\User;
+use App\Services\MailerService;
+use App\Services\NotificacionService;
 
 class PresupuestoController extends Controller
 {
@@ -56,10 +60,10 @@ class PresupuestoController extends Controller
             $ordenServicio = OrdenServicioService::getOne($servicioItem['id_orden_servicio']);
 
             if ($ordenServicio) {
-                $ordenServicio->precio_materiales = $servicioItem['precio_materiales'];
-                $ordenServicio->precio_tipos_equipos = $servicioItem['precio_tipos_equipos'];
-                $ordenServicio->precio_mano_obra = $servicioItem['precio_mano_obra'];
-                $ordenServicio->precio_general = $servicioItem['precio_general'];
+                $ordenServicio->precio_materiales_unitario = $servicioItem['precio_materiales_unitario'];
+                $ordenServicio->precio_tipos_equipos_unitario = $servicioItem['precio_tipos_equipos_unitario'];
+                $ordenServicio->precio_mano_obra_unitario = $servicioItem['precio_mano_obra_unitario'];
+                $ordenServicio->precio_general_unitario = $servicioItem['precio_general_unitario'];
                 $ordenServicio->descuento = $servicioItem['descuento'];
                 $ordenServicio->precio_a_pagar = $servicioItem['precio_a_pagar'];
                 $ordenServicio->save();
@@ -106,6 +110,30 @@ class PresupuestoController extends Controller
                 }
             }
         }
+
+        //obtener id_cliente para enviar correo notificando la accion
+        $cliente = ClienteService::getOne($orden->id_cliente);
+        $id_user_cliente = $cliente->id_user;
+        $user = User::where('id', $id_user_cliente)->first();
+
+        // obtener dominio host y protocolo http o https que hizo el request
+        $origin = $request->header('Origin');
+
+        // $url = 'http://multiservicios.local/servicios/orden/detalles/' . $orden->id_orden;
+        $url = $origin . '/servicios/orden/detalles/' . $orden->id_orden;
+
+        MailerService::enviarCorreo([
+            'to' => [$user->email],
+            'cc' => [],
+            'bcc' => [],
+        ], 'Presupuesto creado', 'emails.presupuesto_creado', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'url' => $url]);
+
+        //grabar registro en la tabla notificaciones
+        $notificacion = NotificacionService::store([
+            'id_user' => $user->id,
+            'asunto' => 'Presupuesto creado',
+            'fecha_envio' => date('Y-m-d H:i:s'),
+        ]);
 
         if (!$presupuesto) {
             return $this->errorResponse('No se pudo crear el presupuesto', 404);
@@ -155,5 +183,41 @@ class PresupuestoController extends Controller
             return $this->errorResponse('Presupuesto no encontrado', 404);
         }
         return $this->successResponse($presupuesto, 'Presupuesto eliminado correctamente');
+    }
+
+    public function aceptarPresupuesto(string $id_orden)
+    {
+        $orden = OrdenService::getOne($id_orden);
+        if (!$orden) {
+            return $this->errorResponse('Orden no encontrada', 404);
+        }
+        $orden->estado = 'Por pagar';
+        $orden->save();
+
+        $presupuesto = PresupuestoService::getOne($orden->id_presupuesto);
+        if (!$presupuesto) {
+            return $this->errorResponse('Presupuesto no encontrado', 404);
+        }
+        $presupuesto->estado = 'Aceptado';
+        $presupuesto->save();
+        return $this->successResponse($presupuesto, 'Presupuesto aceptado correctamente');
+    }
+
+    public function cancelarPresupuesto(string $id_orden)
+    {
+        $orden = OrdenService::getOne($id_orden);
+        if (!$orden) {
+            return $this->errorResponse('Orden no encontrada', 404);
+        }
+        $orden->estado = 'Cancelada';
+        $orden->save();
+
+        $presupuesto = PresupuestoService::getOne($orden->id_presupuesto);
+        if (!$presupuesto) {
+            return $this->errorResponse('Presupuesto no encontrado', 404);
+        }
+        $presupuesto->estado = 'Cancelado';
+        $presupuesto->save();
+        return $this->successResponse($presupuesto, 'Presupuesto cancelado correctamente');
     }
 }

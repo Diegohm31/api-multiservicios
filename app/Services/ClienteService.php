@@ -60,6 +60,12 @@ class ClienteService
         return $cliente;
     }
 
+    public static function getOneByUser($id_user)
+    {
+        $cliente = Cliente::where('id_user', $id_user)->first();
+        return $cliente;
+    }
+
     // public static function enviarPromocion()
     // {
     //     $clientes = Cliente::get()->where('activo', 1);

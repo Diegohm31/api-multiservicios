@@ -138,12 +138,10 @@ class AuthController extends Controller
         //url que redirige al frontend
         // $url = 'http://multiservicios.local/new_password/' . $user->email;
 
-        // obtener dominio host que hizo el reuqest
-        $host = $request->getHost();
-        // obtener protocolo http o https
-        $protocol = $request->getScheme();
+        // obtener dominio host y protocolo http o https que hizo el request
+        $origin = $request->header('Origin');
 
-        $url = $protocol . '://' . $host . '/new_password/' . $user->email;
+        $url = $origin . '/new_password/' . $user->email;
 
         MailerService::enviarCorreo([
             'to' => [$user->email],

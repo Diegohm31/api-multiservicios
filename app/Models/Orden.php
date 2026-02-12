@@ -41,6 +41,7 @@ class Orden extends ApiModel
         'fecha_validacion',
         'observaciones',
         'calificacion',
+        'pdf_peritaje',
     ];
 }
 

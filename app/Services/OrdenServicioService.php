@@ -62,7 +62,7 @@ class OrdenServicioService
         $servicios = DB::table('ordenes_servicios')
             ->join('servicios', 'ordenes_servicios.id_servicio', '=', 'servicios.id_servicio')
             ->where('ordenes_servicios.id_orden', $id_orden)
-            ->select('ordenes_servicios.*', 'servicios.nombre')
+            ->select('ordenes_servicios.*', 'servicios.nombre', 'servicios.servicio_tabulado')
             ->get();
         return $servicios;
     }

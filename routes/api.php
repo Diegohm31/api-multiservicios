@@ -23,6 +23,7 @@ use App\Http\Controllers\ServicioEspecialidadController;
 use App\Http\Controllers\OrdenController;
 use App\Http\Controllers\OrdenServicioController;
 use App\Http\Controllers\PresupuestoController;
+use App\Http\Controllers\ReportePagoController;
 
 // rutas para la autenticacion
 Route::post('/register', [AuthController::class, 'register']);
@@ -42,6 +43,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/ordenes/{id}/cancelar', [OrdenController::class, 'cancelarOrden']);
     Route::put('/ordenes/{id}/aceptar', [OrdenController::class, 'aceptarOrden']);
+
+    Route::put('/presupuestos/{id}/aceptar', [PresupuestoController::class, 'aceptarPresupuesto']);
+    Route::put('/presupuestos/{id}/cancelar', [PresupuestoController::class, 'cancelarPresupuesto']);
+    Route::post('/ordenes/{id}/subir-peritaje', [OrdenController::class, 'subirPeritaje']);
+    Route::put('/reportes-pagos/aceptar', [ReportePagoController::class, 'aceptarReportePago']);
+    Route::put('/reportes-pagos/cancelar', [ReportePagoController::class, 'cancelarReportePago']);
 
     Route::apiResources([
         'clientes' => ClienteController::class,
@@ -63,6 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'ordenes' => OrdenController::class,
         'ordenes-servicios' => OrdenServicioController::class,
         'presupuestos' => PresupuestoController::class,
+        'reportes-pagos' => ReportePagoController::class,
     ]);
 
     Route::get('/tipos-servicios/{id}', [TipoServicioController::class, 'show']);
