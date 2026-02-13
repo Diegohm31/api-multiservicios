@@ -78,7 +78,7 @@ class ReportePagoController extends Controller
             'monto' => 'nullable|numeric',
             'metodo_pago' => 'nullable|string|max:100',
             'num_referencia' => 'nullable|string|max:100',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'imagePath' => 'nullable|string|max:1000',
             'estado' => 'nullable|string|max:100',
             'fecha_emision' => 'nullable|date',

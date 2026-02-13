@@ -42,6 +42,7 @@ class ServicioController extends Controller
             'array_materiales' => 'nullable|array',
             'array_tipos_equipos' => 'nullable|array',
             'array_especialidades' => 'nullable|array',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $data = $request->all();
@@ -122,10 +123,12 @@ class ServicioController extends Controller
             'array_materiales' => 'nullable|array',
             'array_tipos_equipos' => 'nullable|array',
             'array_especialidades' => 'nullable|array',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'imagePath' => 'nullable|string|max:1000',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!request()->has('id_tipo_servicio') && !request()->has('nombre') && !request()->has('descripcion') && !request()->has('unidad_medida') && !request()->has('servicio_tabulado') && !request()->has('precio_materiales') && !request()->has('precio_tipos_equipos') && !request()->has('precio_mano_obra') && !request()->has('precio_general') && !request()->has('duracion_horas') && !request()->has('is_deleted') && !request()->has('array_materiales') && !request()->has('array_tipos_equipos') && !request()->has('array_especialidades')) {
+        if (!request()->has('id_tipo_servicio') && !request()->has('nombre') && !request()->has('descripcion') && !request()->has('unidad_medida') && !request()->has('servicio_tabulado') && !request()->has('precio_materiales') && !request()->has('precio_tipos_equipos') && !request()->has('precio_mano_obra') && !request()->has('precio_general') && !request()->has('duracion_horas') && !request()->has('is_deleted') && !request()->has('array_materiales') && !request()->has('array_tipos_equipos') && !request()->has('array_especialidades') && !request()->has('image') && !request()->has('imagePath')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();

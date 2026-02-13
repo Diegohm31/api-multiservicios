@@ -7,6 +7,9 @@ use App\Models\ApiModel;
 class Servicio extends ApiModel
 {
     const PADDING = 5;
+    const IMAGE_PATH = 'servicios';
+    const IMAGE_FIELD = 'image'; // campo que guarda el nombre original de la imagen
+    const IMAGE_PATH_FIELD = 'imagePath'; // campo que guarda la ruta relativa de la imagen
     protected $table = 'servicios';
     protected $primaryKey = 'id_servicio';
     protected $keyType = 'string';
@@ -39,6 +42,8 @@ class Servicio extends ApiModel
         'precio_general',
         'duracion_horas',
         'is_deleted',
+        'image',
+        'imagePath',
     ];
 }
 
