@@ -127,7 +127,7 @@ class ReportePagoController extends Controller
             if (!$orden) {
                 return $this->errorResponse('Orden no encontrada', 404);
             }
-            $orden->estado = 'En espera';
+            $orden->estado = 'Asignando Personal';
             $orden->save();
 
             $reporte_pago = ReportePagoService::getOne($data['id_reporte_pago']);

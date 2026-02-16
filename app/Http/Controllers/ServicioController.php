@@ -42,7 +42,7 @@ class ServicioController extends Controller
             'array_materiales' => 'nullable|array',
             'array_tipos_equipos' => 'nullable|array',
             'array_especialidades' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $data = $request->all();
