@@ -38,6 +38,8 @@ class OrdenServicio extends ApiModel
         'precio_general_unitario',
         'descuento',
         'precio_a_pagar',
+        'fecha_inicio',
+        'fecha_fin',
     ];
 }
 

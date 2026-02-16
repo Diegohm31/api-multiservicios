@@ -24,6 +24,7 @@ use App\Http\Controllers\OrdenController;
 use App\Http\Controllers\OrdenServicioController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\ReportePagoController;
+use App\Http\Controllers\NotificacionController;
 
 // rutas para la autenticacion
 Route::post('/register', [AuthController::class, 'register']);
@@ -47,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/presupuestos/{id}/aceptar', [PresupuestoController::class, 'aceptarPresupuesto']);
     Route::put('/presupuestos/{id}/cancelar', [PresupuestoController::class, 'cancelarPresupuesto']);
     Route::post('/ordenes/{id}/subir-peritaje', [OrdenController::class, 'subirPeritaje']);
+    Route::put('/ordenes/{id}/asignar-personal', [OrdenController::class, 'asignarPersonal']);
+    Route::get('/ordenes/{id}/asignar-personal', [OrdenController::class, 'getOneOrdenAsignarPersonal']);
     Route::put('/reportes-pagos/aceptar', [ReportePagoController::class, 'aceptarReportePago']);
     Route::put('/reportes-pagos/cancelar', [ReportePagoController::class, 'cancelarReportePago']);
 
@@ -71,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'ordenes-servicios' => OrdenServicioController::class,
         'presupuestos' => PresupuestoController::class,
         'reportes-pagos' => ReportePagoController::class,
+        'notificaciones' => NotificacionController::class,
     ]);
 
     Route::get('/tipos-servicios/{id}', [TipoServicioController::class, 'show']);

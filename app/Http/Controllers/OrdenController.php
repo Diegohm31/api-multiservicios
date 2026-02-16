@@ -15,22 +15,30 @@ use App\Models\User;
 use App\Services\ClienteService;
 use App\Services\PresupuestoService;
 use App\Services\NotificacionService;
+use App\Services\OrdenServicioMaterialService;
+use App\Services\OrdenServicioTipoEquipoService;
+use App\Services\OrdenServicioEspecialidadService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use App\Models\Orden;
+use App\Models\OrdenServicio;
+use App\Models\OrdenServicioOperativo;
+use App\Models\OrdenServicioEquipo;
 
 class OrdenController extends Controller
 {
     public function index(Request $request)
     {
         $user = $request->user();
-        //$ordenes = collect([]); // Inicializamos para evitar el error de variable no asignada
+        $ordenes = collect([]);
 
-        if ($user->id_rol == 00003) {
+        if ($user->id_rol === '00003') {
             $ordenes = OrdenService::getAll();
-        }
-
-        if ($user->id_rol == 00001) {
+        } elseif ($user->id_rol === '00001') {
             $cliente = Cliente::where('id_user', $user->id)->first();
-            $ordenes = OrdenService::getOrdenesByCliente($cliente->id_cliente);
+            if ($cliente) {
+                $ordenes = OrdenService::getOrdenesByCliente($cliente->id_cliente);
+            }
         }
 
         return $this->successResponse(
@@ -50,8 +58,8 @@ class OrdenController extends Controller
             'id_presupuesto' => 'nullable|string|max:100',
             'direccion' => 'required|string|max:1000',
             'estado' => 'required|string|max:100',
-            'fecha_inicio' => 'required|string|max:100',
-            'fecha_fin' => 'required|string|max:100',
+            'fecha_inicio' => 'nullable|string|max:100',
+            'fecha_fin' => 'nullable|string|max:100',
             'fecha_inicio_real' => 'nullable|string|max:100',
             'fecha_fin_real' => 'nullable|string|max:100',
             'fecha_emision' => 'required|string|max:100',
@@ -275,5 +283,81 @@ class OrdenController extends Controller
         }
 
         return $this->errorResponse('No se pudo subir el archivo', 400);
+    }
+
+    public function getOneOrdenAsignarPersonal($id)
+    {
+        $orden = OrdenService::getOne($id);
+        if (!$orden) {
+            return $this->errorResponse('Orden no encontrada', 404);
+        }
+
+        $orden->array_servicios = OrdenServicioService::getOneByOrden($id);
+
+        foreach ($orden->array_servicios as $servicio) {
+            $servicio->array_materiales = OrdenServicioMaterialService::getOneByServicio($servicio->id_orden_servicio);
+            $servicio->array_tipos_equipos = OrdenServicioTipoEquipoService::getOneByServicio($servicio->id_orden_servicio);
+            $servicio->array_especialidades = OrdenServicioEspecialidadService::getOneByServicio($servicio->id_orden_servicio);
+        }
+
+        return $this->successResponse($orden, 'Orden obtenida correctamente');
+    }
+
+    public function asignarPersonal(Request $request, $id)
+    {
+        $payload = $request->json()->all();
+        $servicios = $payload['servicios'] ?? [];
+
+        DB::beginTransaction();
+        try {
+            $orden = Orden::find($id);
+            if (!$orden) {
+                return $this->errorResponse('Orden no encontrada', 404);
+            }
+
+            // 1. Actualizar orden principal con estado y fechas globales provistas por el frontend
+            $orden->estado = 'En espera';
+            $orden->fecha_inicio = $payload['fecha_inicio'] ?? $orden->fecha_inicio;
+            $orden->fecha_fin = $payload['fecha_fin'] ?? $orden->fecha_fin;
+            $orden->save();
+
+            foreach ($servicios as $srvData) {
+                $id_orden_servicio = $srvData['id_orden_servicio'];
+                $ordenServicio = OrdenServicio::find($id_orden_servicio);
+
+                // 2. Actualizar fechas del servicio (ya calculadas en el frontend)
+                $ordenServicio->fecha_inicio = $srvData['fecha_inicio'] ?? null;
+                $ordenServicio->fecha_fin = $srvData['fecha_fin'] ?? null;
+                $ordenServicio->save();
+
+                // 3. Crear operativos
+                foreach ($srvData['operadores'] as $opData) {
+                    OrdenServicioOperativo::create([
+                        'id_orden_servicio' => $id_orden_servicio,
+                        'id_operativo' => $opData['id_operativo'],
+                        'id_especialidad' => $opData['id_especialidad'],
+                        'fecha_inicio' => $opData['fecha_inicio'],
+                        'fecha_fin' => $opData['fecha_fin'],
+                        'es_jefe' => $opData['es_jefe'] ?? 0
+                    ]);
+                }
+
+                // 4. Crear registros de equipos
+                foreach ($srvData['equipos'] as $eqData) {
+                    OrdenServicioEquipo::create([
+                        'id_orden_servicio' => $id_orden_servicio,
+                        'id_equipo' => $eqData['id_equipo'],
+                        'fecha_inicio' => $eqData['fecha_inicio'],
+                        'fecha_fin' => $eqData['fecha_fin']
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return $this->successResponse($orden, 'Asignación guardada con éxito.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->errorResponse('Error: ' . $e->getMessage(), 500);
+        }
     }
 }

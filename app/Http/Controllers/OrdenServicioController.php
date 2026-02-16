@@ -64,10 +64,12 @@ class OrdenServicioController extends Controller
             'precio_general_unitario' => 'nullable|numeric',
             'descuento' => 'nullable|numeric',
             'precio_a_pagar' => 'nullable|numeric',
+            'fecha_inicio' => 'nullable|date',
+            'fecha_fin' => 'nullable|date',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('id_orden') && !$request->has('id_servicio') && !$request->has('descripcion') && !$request->has('cantidad') && !$request->has('precio_materiales_unitario') && !$request->has('precio_tipos_equipos_unitario') && !$request->has('precio_mano_obra_unitario') && !$request->has('precio_general_unitario') && !$request->has('descuento') && !$request->has('precio_a_pagar')) {
+        if (!$request->has('id_orden') && !$request->has('id_servicio') && !$request->has('descripcion') && !$request->has('cantidad') && !$request->has('precio_materiales_unitario') && !$request->has('precio_tipos_equipos_unitario') && !$request->has('precio_mano_obra_unitario') && !$request->has('precio_general_unitario') && !$request->has('descuento') && !$request->has('precio_a_pagar') && !$request->has('fecha_inicio') && !$request->has('fecha_fin')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();
