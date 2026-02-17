@@ -33,12 +33,28 @@ class MovimientoMaterialController extends Controller
         $data['id_admin'] = $admin->id_admin;
 
         //ciclo llamando al servicio para registrar cada movimiento
+        $alertas = [];
         foreach ($data['movimientos'] as $movimiento) {
             $movimiento['id_admin'] = $data['id_admin'];
-            $movimiento_registrado = MovimientoMaterialService::store($movimiento);
-            if (!$movimiento_registrado) {
+            $resultado = MovimientoMaterialService::store($movimiento);
+
+            if (!$resultado) {
                 return $this->errorResponse('Movimiento de material no creado', 404);
             }
+
+            if ($resultado->alerta) {
+                // Deduplicar alertas por id_material
+                $alertas[$resultado->alerta->id_material] = [
+                    'nombre' => $resultado->alerta->nombre,
+                    'stock_actual' => $resultado->alerta->stock_actual,
+                    'stock_minimo' => $resultado->alerta->stock_minimo,
+                ];
+            }
+        }
+
+        // Si existen alertas, notificar de forma consolidada
+        if (!empty($alertas)) {
+            MovimientoMaterialService::notificarVariosStockBajo(array_values($alertas));
         }
 
         return $this->successResponse($data, 'Movimientos de materiales creados correctamente');

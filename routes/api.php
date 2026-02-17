@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-all-asignaciones', [OrdenController::class, 'getAllAsignaciones']);
     Route::put('/reportes-pagos/aceptar', [ReportePagoController::class, 'aceptarReportePago']);
     Route::put('/reportes-pagos/cancelar', [ReportePagoController::class, 'cancelarReportePago']);
+    Route::put('/ordenes/{id}/poner-en-ejecucion', [OrdenController::class, 'ponerEnEjecucion']);
 
     Route::apiResources([
         'clientes' => ClienteController::class,
