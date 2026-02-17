@@ -8,7 +8,10 @@ class OrdenServicioEquipoService
 {
     public static function getAll()
     {
-        $registros = OrdenServicioEquipo::get();
+        $registros = DB::table('ordenes_servicios_equipos')
+            ->join('ordenes_servicios', 'ordenes_servicios_equipos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->select('ordenes_servicios_equipos.*', 'ordenes_servicios.id_orden')
+            ->get();
         return $registros;
     }
 

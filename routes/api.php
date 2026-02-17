@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ordenes/{id}/subir-peritaje', [OrdenController::class, 'subirPeritaje']);
     Route::put('/ordenes/{id}/asignar-personal', [OrdenController::class, 'asignarPersonal']);
     Route::get('/ordenes/{id}/asignar-personal', [OrdenController::class, 'getOneOrdenAsignarPersonal']);
+    Route::get('/get-all-asignaciones', [OrdenController::class, 'getAllAsignaciones']);
     Route::put('/reportes-pagos/aceptar', [ReportePagoController::class, 'aceptarReportePago']);
     Route::put('/reportes-pagos/cancelar', [ReportePagoController::class, 'cancelarReportePago']);
 

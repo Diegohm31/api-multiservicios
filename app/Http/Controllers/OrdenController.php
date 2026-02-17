@@ -360,4 +360,21 @@ class OrdenController extends Controller
             return $this->errorResponse('Error: ' . $e->getMessage(), 500);
         }
     }
+    public function getAllAsignaciones()
+    {
+        $operativosAsignados = DB::table('ordenes_servicios_operativos')
+            ->join('ordenes_servicios', 'ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->select('ordenes_servicios_operativos.*', 'ordenes_servicios.id_orden')
+            ->get();
+
+        $equiposAsignados = DB::table('ordenes_servicios_equipos')
+            ->join('ordenes_servicios', 'ordenes_servicios_equipos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->select('ordenes_servicios_equipos.*', 'ordenes_servicios.id_orden')
+            ->get();
+
+        return $this->successResponse([
+            'operativos' => $operativosAsignados,
+            'equipos' => $equiposAsignados
+        ], 'Asignaciones obtenidas correctamente');
+    }
 }
