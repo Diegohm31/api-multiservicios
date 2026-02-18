@@ -25,6 +25,7 @@ use App\Http\Controllers\OrdenServicioController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\ReportePagoController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\AvanceOrdenController;
 
 // rutas para la autenticacion
 Route::post('/register', [AuthController::class, 'register']);
@@ -44,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/ordenes/{id}/cancelar', [OrdenController::class, 'cancelarOrden']);
     Route::put('/ordenes/{id}/aceptar', [OrdenController::class, 'aceptarOrden']);
+    Route::put('/ordenes/{id}/completar', [OrdenController::class, 'completarOrden']);
 
     Route::put('/presupuestos/{id}/aceptar', [PresupuestoController::class, 'aceptarPresupuesto']);
     Route::put('/presupuestos/{id}/cancelar', [PresupuestoController::class, 'cancelarPresupuesto']);
@@ -54,6 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reportes-pagos/aceptar', [ReportePagoController::class, 'aceptarReportePago']);
     Route::put('/reportes-pagos/cancelar', [ReportePagoController::class, 'cancelarReportePago']);
     Route::put('/ordenes/{id}/poner-en-ejecucion', [OrdenController::class, 'ponerEnEjecucion']);
+    Route::get('/ordenes/{id}/avances', [OrdenController::class, 'getOneOrdenAvances']);
 
     Route::apiResources([
         'clientes' => ClienteController::class,
@@ -77,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'presupuestos' => PresupuestoController::class,
         'reportes-pagos' => ReportePagoController::class,
         'notificaciones' => NotificacionController::class,
+        'avances-ordenes' => AvanceOrdenController::class,
     ]);
 
     Route::get('/tipos-servicios/{id}', [TipoServicioController::class, 'show']);

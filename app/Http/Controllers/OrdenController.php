@@ -23,9 +23,11 @@ use App\Services\OrdenServicioEspecialidadService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use App\Models\Orden;
+use App\Models\Operativo;
 use App\Models\OrdenServicio;
 use App\Models\OrdenServicioOperativo;
 use App\Models\OrdenServicioEquipo;
+use App\Services\AvanceOrdenService;
 
 class OrdenController extends Controller
 {
@@ -40,6 +42,11 @@ class OrdenController extends Controller
             $cliente = Cliente::where('id_user', $user->id)->first();
             if ($cliente) {
                 $ordenes = OrdenService::getOrdenesByCliente($cliente->id_cliente);
+            }
+        } elseif ($user->id_rol === '00002') {
+            $operativo = Operativo::where('id_user', $user->id)->first();
+            if ($operativo) {
+                $ordenes = OrdenService::getOrdenesByOperativo($operativo->id_operativo);
             }
         }
 
@@ -128,6 +135,22 @@ class OrdenController extends Controller
                     $servicio->array_especialidades = ServicioEspecialidadService::getOneByServicio($servicio->id_servicio);
                 }
             }
+        }
+
+        // Siempre cargar operativos asignados para cada servicio de la orden
+        foreach ($orden->array_servicios as $servicio) {
+            $servicio->operativos_asignados = DB::table('ordenes_servicios_operativos')
+                ->join('operativos', 'ordenes_servicios_operativos.id_operativo', '=', 'operativos.id_operativo')
+                ->join('especialidades', 'ordenes_servicios_operativos.id_especialidad', '=', 'especialidades.id_especialidad')
+                ->where('ordenes_servicios_operativos.id_orden_servicio', $servicio->id_orden_servicio)
+                ->select(
+                    'operativos.id_operativo',
+                    'operativos.id_user',
+                    'operativos.nombre as nombre_operativo',
+                    'especialidades.nombre as nombre_especialidad',
+                    'ordenes_servicios_operativos.es_jefe'
+                )
+                ->get();
         }
 
         return $this->successResponse(
@@ -257,6 +280,43 @@ class OrdenController extends Controller
         return $this->successResponse($orden, 'Orden aceptada correctamente');
     }
 
+    public function completarOrden(Request $request, $id)
+    {
+        $request->validate([
+            'fecha_fin_real' => 'required|date',
+        ]);
+
+        $data = $request->all();
+
+        $orden = OrdenService::getOne($id);
+        if (!$orden) {
+            return $this->errorResponse('Orden no encontrada', 404);
+        }
+        $orden->estado = 'Completada';
+        $orden->fecha_fin_real = $data['fecha_fin_real'];
+        $orden->save();
+
+        //obtener id_cliente para enviar correo notificando la accion
+        $cliente = ClienteService::getOne($orden->id_cliente);
+        $id_user_cliente = $cliente->id_user;
+        $user = User::where('id', $id_user_cliente)->first();
+
+        MailerService::enviarCorreo([
+            'to' => [$user->email],
+            'cc' => [],
+            'bcc' => [],
+        ], 'Orden completada', 'emails.completacion_orden', ['nombre' => $user->name, 'id_orden' => $orden->id_orden]);
+
+        //grabar registro en la tabla notificaciones
+        $notificacion = NotificacionService::store([
+            'id_user' => $user->id,
+            'asunto' => 'Orden completada',
+            'fecha_envio' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->successResponse($orden, 'Orden completada correctamente');
+    }
+
     public function subirPeritaje(Request $request, $id)
     {
         $request->validate([
@@ -332,7 +392,7 @@ class OrdenController extends Controller
                 $ordenServicio->fecha_fin = $srvData['fecha_fin'] ?? null;
                 $ordenServicio->save();
 
-                // 3. Crear operativos
+                // 3. Crear registros de operativos
                 foreach ($srvData['operadores'] as $opData) {
                     OrdenServicioOperativo::create([
                         'id_orden_servicio' => $id_orden_servicio,
@@ -356,6 +416,20 @@ class OrdenController extends Controller
             }
 
             DB::commit();
+
+            //notificar a cada uno de los operativos sobre la asignacion
+            foreach ($servicios as $srvData) {
+                foreach ($srvData['operadores'] as $opData) {
+                    $operativo = Operativo::find($opData['id_operativo']);
+                    $user = User::find($operativo->id_user);
+                    MailerService::enviarCorreo([
+                        'to' => [$user->email],
+                        'cc' => [],
+                        'bcc' => [],
+                    ], 'Asignación de orden', 'emails.asignacion_orden', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'fecha_inicio' => $orden->fecha_inicio, 'fecha_fin' => $orden->fecha_fin]);
+                }
+            }
+
             return $this->successResponse($orden, 'Asignación guardada con éxito.');
         } catch (\Exception $e) {
             DB::rollback();
@@ -464,5 +538,20 @@ class OrdenController extends Controller
             'operativos' => $operativosAsignados,
             'equipos' => $equiposAsignados
         ], 'Asignaciones obtenidas correctamente');
+    }
+
+    public function getOneOrdenAvances($id)
+    {
+        $orden = Orden::find($id);
+        if (!$orden) {
+            return $this->errorResponse('Orden no encontrada', 404);
+        }
+
+        $avancesOrden = AvanceOrdenService::getAllByOrden($id);
+
+        return $this->successResponse([
+            'orden' => $orden,
+            'avances_orden' => $avancesOrden
+        ], 'Avances de la orden obtenidos correctamente');
     }
 }
