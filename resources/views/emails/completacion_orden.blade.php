@@ -11,6 +11,7 @@
         <h2 style="color: #28a745; text-align: center;">¡Orden Completada!</h2>
         <p>Hola, {{ $nombre }}</p>
         <p>Te informamos que la orden #{{ $id_orden }} ha sido completada.</p>
+        <p>Ya puedes calificar en la plataforma la calidad del servicio recibido!</p>
         <p style="margin-top: 30px; font-size: 14px; color: #666;">Gracias por confiar en nosotros.</p>
     </div>
 </body>

@@ -28,6 +28,7 @@ use App\Models\OrdenServicio;
 use App\Models\OrdenServicioOperativo;
 use App\Models\OrdenServicioEquipo;
 use App\Services\AvanceOrdenService;
+use App\Services\OperativoService;
 
 class OrdenController extends Controller
 {
@@ -188,6 +189,26 @@ class OrdenController extends Controller
         $orden = OrdenService::update($id, $data);
         if (!$orden) {
             return $this->errorResponse('Orden no encontrada', 404);
+        }
+
+        if ($request->has('calificacion')) {
+            // sumar esa calificacion al campo reputacion de cada uno de los empleados que participaron en esa orden
+            $orden->array_servicios = OrdenServicioService::getOneByOrden($id);
+            foreach ($orden->array_servicios as $servicio) {
+                $servicio->operativos_asignados = DB::table('ordenes_servicios_operativos')
+                    ->join('operativos', 'ordenes_servicios_operativos.id_operativo', '=', 'operativos.id_operativo')
+                    ->where('ordenes_servicios_operativos.id_orden_servicio', $servicio->id_orden_servicio)
+                    ->select(
+                        'operativos.id_operativo'
+                    )
+                    ->get();
+
+                foreach ($servicio->operativos_asignados as $operativoAux) {
+                    $operativo = OperativoService::getOne($operativoAux->id_operativo);
+                    $operativo->reputacion += $request->calificacion;
+                    $operativo->save();
+                }
+            }
         }
 
         return $this->successResponse($orden, 'Orden actualizada correctamente');
@@ -427,6 +448,13 @@ class OrdenController extends Controller
                         'cc' => [],
                         'bcc' => [],
                     ], 'Asignación de orden', 'emails.asignacion_orden', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'fecha_inicio' => $orden->fecha_inicio, 'fecha_fin' => $orden->fecha_fin]);
+
+                    //grabar registro en la tabla notificaciones
+                    $notificacion = NotificacionService::store([
+                        'id_user' => $user->id,
+                        'asunto' => 'Orden asignada',
+                        'fecha_envio' => date('Y-m-d H:i:s'),
+                    ]);
                 }
             }
 
