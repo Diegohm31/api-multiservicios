@@ -61,8 +61,14 @@ class OrdenServicioService
         //join con la tabla servicios para obtener el nombre del servicio
         $servicios = DB::table('ordenes_servicios')
             ->join('servicios', 'ordenes_servicios.id_servicio', '=', 'servicios.id_servicio')
+            ->leftJoin('tipos_servicios', 'servicios.id_tipo_servicio', '=', 'tipos_servicios.id_tipo_servicio')
             ->where('ordenes_servicios.id_orden', $id_orden)
-            ->select('ordenes_servicios.*', 'servicios.nombre', 'servicios.servicio_tabulado')
+            ->select(
+                'ordenes_servicios.*',
+                'servicios.nombre',
+                'servicios.servicio_tabulado',
+                'tipos_servicios.nombre as categoria_nombre'
+            )
             ->get();
         return $servicios;
     }

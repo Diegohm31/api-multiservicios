@@ -26,6 +26,9 @@ use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\ReportePagoController;
 use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\AvanceOrdenController;
+use App\Http\Controllers\PlanMembresiaController;
+use App\Http\Controllers\PlanMembresiaTipoServicioController;
+use App\Http\Controllers\MembresiaController;
 
 // rutas para la autenticacion
 Route::post('/register', [AuthController::class, 'register']);
@@ -81,6 +84,9 @@ Route::middleware('auth:sanctum')->group(function () {
         'reportes-pagos' => ReportePagoController::class,
         'notificaciones' => NotificacionController::class,
         'avances-ordenes' => AvanceOrdenController::class,
+        'planes-membresias' => PlanMembresiaController::class,
+        'planes-membresias-tipos-servicios' => PlanMembresiaTipoServicioController::class,
+        'membresias' => MembresiaController::class,
     ]);
 
     Route::get('/tipos-servicios/{id}', [TipoServicioController::class, 'show']);

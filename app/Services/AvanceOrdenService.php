@@ -62,7 +62,13 @@ class AvanceOrdenService
 
     public static function getAllByOrden($id)
     {
-        $avanceOrdenes = AvanceOrden::where('id_orden', $id)->where('is_deleted', false)->get();
+        $avanceOrdenes = DB::table('avances_ordenes')
+            ->join('operativos', 'avances_ordenes.id_operativo', '=', 'operativos.id_operativo')
+            ->where('avances_ordenes.id_orden', $id)
+            ->where('avances_ordenes.is_deleted', false)
+            ->select('avances_ordenes.*', 'operativos.nombre as nombre_operativo')
+            ->orderBy('avances_ordenes.fecha_avance', 'asc')
+            ->get();
         return $avanceOrdenes;
     }
 }

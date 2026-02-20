@@ -22,7 +22,7 @@ class PresupuestoService
     {
         DB::beginTransaction();
         $data['estado'] = 'Pendiente';
-        $data['fecha_emision'] = date('Y-m-d');
+        $data['fecha_emision'] = date('Y-m-d H:i:s');
         $presupuesto = Presupuesto::create($data);
 
         DB::commit();

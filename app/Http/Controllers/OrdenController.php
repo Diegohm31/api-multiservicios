@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\ClienteService;
 use App\Services\PresupuestoService;
 use App\Services\NotificacionService;
+use App\Services\UserService;
 use App\Services\MovimientoMaterialService;
 use App\Services\OrdenServicioMaterialService;
 use App\Services\OrdenServicioTipoEquipoService;
@@ -98,7 +99,9 @@ class OrdenController extends Controller
                 $dataServicio['precio_tipos_equipos_unitario'] = $servicio['precio_tipos_equipos_unitario'];
                 $dataServicio['precio_mano_obra_unitario'] = $servicio['precio_mano_obra_unitario'];
                 $dataServicio['precio_general_unitario'] = $servicio['precio_general_unitario'];
-                $dataServicio['descuento'] = $servicio['descuento'];
+                $dataServicio['porcentaje_descuento'] = $servicio['porcentaje_descuento'];
+                $dataServicio['descuento_unitario'] = $servicio['descuento_unitario'];
+                $dataServicio['precio_neto_unitario'] = $servicio['precio_neto_unitario'];
                 $dataServicio['precio_a_pagar'] = $servicio['precio_a_pagar'];
             }
 
@@ -119,6 +122,11 @@ class OrdenController extends Controller
         $orden = OrdenService::getOne($id);
         if (!$orden) {
             return $this->errorResponse('Orden no encontrada', 404);
+        }
+
+        $orden->cliente = ClienteService::getOne($orden->id_cliente);
+        if ($orden->cliente && $orden->cliente->id_user) {
+            $orden->cliente->user = UserService::getOneById($orden->cliente->id_user);
         }
 
         $orden->array_servicios = OrdenServicioService::getOneByOrden($id);
@@ -236,7 +244,7 @@ class OrdenController extends Controller
             return $this->errorResponse('Orden no encontrada', 404);
         }
         $orden->estado = 'Cancelada';
-        $orden->fecha_validacion = date('Y-m-d');
+        $orden->fecha_validacion = date('Y-m-d H:i:s');
         // si hay observaciones agregarla, si no dejar null
         $orden->observaciones = $data['observaciones'] ?? null;
         $orden->save();
@@ -276,7 +284,7 @@ class OrdenController extends Controller
             return $this->errorResponse('Orden no encontrada', 404);
         }
         $orden->estado = 'Aceptada';
-        $orden->fecha_validacion = date('Y-m-d');
+        $orden->fecha_validacion = date('Y-m-d H:i:s');
         $orden->observaciones = $data['observaciones'] ?? null;
         $orden->save();
 

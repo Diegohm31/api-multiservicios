@@ -13,7 +13,10 @@
         @if ($id_orden)
             <p>Te informamos que el reporte de pago de la orden #{{ $id_orden }} ha sido aceptado.</p>
         @else
-            <p>Te informamos que el reporte de pago del plan de membresia #{{ $id_plan_membresia }} ha sido aceptado.</p>
+            <p>Te informamos que el reporte de pago del plan de membresia "{{ $nombre_plan_membresia }}" ha sido activado
+                correctamente.</p>
+            <p>Fecha de inicio: {{ $fecha_inicio }}</p>
+            <p>Fecha de fin: {{ $fecha_fin }}</p>
         @endif
         @if ($observaciones)
             <p>Observaciones: {{ $observaciones }}</p>

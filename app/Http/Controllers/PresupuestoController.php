@@ -64,7 +64,9 @@ class PresupuestoController extends Controller
                 $ordenServicio->precio_tipos_equipos_unitario = $servicioItem['precio_tipos_equipos_unitario'];
                 $ordenServicio->precio_mano_obra_unitario = $servicioItem['precio_mano_obra_unitario'];
                 $ordenServicio->precio_general_unitario = $servicioItem['precio_general_unitario'];
-                $ordenServicio->descuento = $servicioItem['descuento'];
+                $ordenServicio->porcentaje_descuento = $servicioItem['porcentaje_descuento'];
+                $ordenServicio->descuento_unitario = $servicioItem['descuento_unitario'];
+                $ordenServicio->precio_neto_unitario = $servicioItem['precio_neto_unitario'];
                 $ordenServicio->precio_a_pagar = $servicioItem['precio_a_pagar'];
                 $ordenServicio->save();
 

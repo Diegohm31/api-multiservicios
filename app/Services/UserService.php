@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Services\MembresiaService;
 
 class UserService
 {
@@ -38,6 +39,9 @@ class UserService
         switch ($user->id_rol) {
             case '00001':
                 $user = User::join('clientes', 'users.id', '=', 'clientes.id_user')->where('users.id', $id)->first();
+                if ($user) {
+                    $user->membresia_activa = MembresiaService::getActiveByCliente($user->id_cliente);
+                }
                 break;
 
             case '00002':

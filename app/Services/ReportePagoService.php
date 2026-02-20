@@ -12,8 +12,10 @@ class ReportePagoService
         $reportes_pagos = DB::table('reportes_pagos')
             ->join('clientes', 'reportes_pagos.id_cliente', '=', 'clientes.id_cliente')
             ->leftJoin('admins', 'reportes_pagos.id_admin', '=', 'admins.id_admin')
-            ->leftJoin('planes_membresias', 'reportes_pagos.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
-            ->select('reportes_pagos.*', 'clientes.nombre as cliente_nombre', 'clientes.cedula as cliente_cedula', 'admins.nombre as admin_nombre', 'planes_membresias.nombre as plan_membresia_nombre')
+            ->leftJoin('ordenes', 'reportes_pagos.id_orden', '=', 'ordenes.id_orden')
+            ->leftJoin('membresias', 'reportes_pagos.id_membresia', '=', 'membresias.id_membresia')
+            ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
+            ->select('reportes_pagos.*', 'clientes.nombre as cliente_nombre', 'clientes.cedula as cliente_cedula', 'admins.nombre as admin_nombre', 'ordenes.id_orden as orden_id_orden', 'planes_membresias.nombre as plan_membresia_nombre')
             ->get();
         return $reportes_pagos;
     }
@@ -30,8 +32,10 @@ class ReportePagoService
         $reporte_pago = DB::table('reportes_pagos')
             ->join('clientes', 'reportes_pagos.id_cliente', '=', 'clientes.id_cliente')
             ->leftJoin('admins', 'reportes_pagos.id_admin', '=', 'admins.id_admin')
-            ->leftJoin('planes_membresias', 'reportes_pagos.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
-            ->select('reportes_pagos.*', 'clientes.nombre as cliente_nombre', 'clientes.cedula as cliente_cedula', 'admins.nombre as admin_nombre', 'planes_membresias.nombre as plan_membresia_nombre')
+            ->leftJoin('ordenes', 'reportes_pagos.id_orden', '=', 'ordenes.id_orden')
+            ->leftJoin('membresias', 'reportes_pagos.id_membresia', '=', 'membresias.id_membresia')
+            ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
+            ->select('reportes_pagos.*', 'clientes.nombre as cliente_nombre', 'clientes.cedula as cliente_cedula', 'admins.nombre as admin_nombre', 'ordenes.id_orden as orden_id_orden', 'planes_membresias.nombre as plan_membresia_nombre')
             ->where('reportes_pagos.id_reporte_pago', $id)
             ->first();
         return $reporte_pago;

@@ -10,6 +10,7 @@ use App\Services\ClienteService;
 use App\Services\PlanMembresiaService;
 use App\Services\MailerService;
 use App\Services\NotificacionService;
+use App\Services\MembresiaService;
 use App\Models\User;
 
 class ReportePagoController extends Controller
@@ -31,7 +32,7 @@ class ReportePagoController extends Controller
 
         $request->validate([
             'id_orden' => 'nullable|exists:ordenes,id_orden',
-            'id_plan_membresia' => 'nullable|exists:planes_membresias,id_plan_membresia',
+            'id_membresia' => 'nullable|exists:membresias,id_membresia',
             'monto' => 'required|numeric',
             'metodo_pago' => 'required|string|max:100',
             'num_referencia' => 'required|string|max:100',
@@ -48,6 +49,13 @@ class ReportePagoController extends Controller
             $orden->estado = 'Verificando Pago';
             $orden->save();
         }
+
+        if ($reporte_pago->id_membresia) {
+            $membresia = MembresiaService::getOne($reporte_pago->id_membresia);
+            $membresia->estado = 'Verificando Pago';
+            $membresia->save();
+        }
+
         if (!$reporte_pago) {
             return $this->errorResponse('No se pudo crear el reporte de pago', 404);
         }
@@ -113,7 +121,7 @@ class ReportePagoController extends Controller
         $request->validate([
             'id_reporte_pago' => 'required|exists:reportes_pagos,id_reporte_pago',
             'id_orden' => 'nullable|exists:ordenes,id_orden',
-            'id_plan_membresia' => 'nullable|exists:planes_membresias,id_plan_membresia',
+            'id_membresia' => 'nullable|exists:membresias,id_membresia',
             'observaciones' => 'nullable|string|max:1000',
         ]);
 
@@ -136,9 +144,17 @@ class ReportePagoController extends Controller
             }
         }
 
-        if ($data['id_plan_membresia']) {
-            $id_plan_membresia = $data['id_plan_membresia'];
-            $plan_membresia = PlanMembresiaService::getOne($id_plan_membresia);
+        if ($data['id_membresia']) {
+            $id_membresia = $data['id_membresia'];
+            $membresia = MembresiaService::getOne($id_membresia);
+
+            $membresia->estado = 'Activa';
+            $membresia->fecha_inicio = date('Y-m-d H:i:s');
+            //la fecha de fin sera la fecha de inicio mas la duracion de ese plan (la cual ya esta almacenada en meses)
+            $plan_membresia = PlanMembresiaService::getOne($membresia->id_plan_membresia);
+            $membresia->fecha_fin = date('Y-m-d H:i:s', strtotime('+' . $plan_membresia->duracion_meses . ' months'));
+            $membresia->save();
+
             $reporte_pago = ReportePagoService::getOne($data['id_reporte_pago']);
             if (!$reporte_pago) {
                 return $this->errorResponse('Reporte de pago no encontrado', 404);
@@ -165,8 +181,10 @@ class ReportePagoController extends Controller
         ], 'Reporte de pago aceptado', 'emails.reporte_pago_aceptado', [
             'nombre' => $user_cliente->name,
             'id_orden' => $reporte_pago->id_orden ? $reporte_pago->id_orden : '',
-            'id_plan_membresia' => $reporte_pago->id_plan_membresia ? $reporte_pago->id_plan_membresia : '',
+            //'id_plan_membresia' => $plan_membresia->id_plan_membresia ? $plan_membresia->id_plan_membresia : '',
             'nombre_plan_membresia' => $plan_membresia ? $plan_membresia->nombre : '',
+            'fecha_inicio' => $membresia ? $membresia->fecha_inicio : '',
+            'fecha_fin' => $membresia ? $membresia->fecha_fin : '',
             'observaciones' => $data['observaciones'] ?? '',
         ]);
 
@@ -185,7 +203,7 @@ class ReportePagoController extends Controller
         $request->validate([
             'id_reporte_pago' => 'required|exists:reportes_pagos,id_reporte_pago',
             'id_orden' => 'nullable|exists:ordenes,id_orden',
-            'id_plan_membresia' => 'nullable|exists:planes_membresias,id_plan_membresia',
+            'id_membresia' => 'nullable|exists:membresias,id_membresia',
             'observaciones' => 'nullable|string|max:1000',
         ]);
 
@@ -206,9 +224,14 @@ class ReportePagoController extends Controller
             }
         }
 
-        if ($data['id_plan_membresia']) {
-            $id_plan_membresia = $data['id_plan_membresia'];
-            $plan_membresia = PlanMembresiaService::getOne($id_plan_membresia);
+        if ($data['id_membresia']) {
+            $id_membresia = $data['id_membresia'];
+            $membresia = MembresiaService::getOne($id_membresia);
+            $membresia->estado = 'Cancelada';
+            $membresia->save();
+
+            $plan_membresia = PlanMembresiaService::getOne($membresia->id_plan_membresia);
+
             $reporte_pago = ReportePagoService::getOne($data['id_reporte_pago']);
             if (!$reporte_pago) {
                 return $this->errorResponse('Reporte de pago no encontrado', 404);
@@ -235,7 +258,7 @@ class ReportePagoController extends Controller
         ], 'Reporte de pago cancelado', 'emails.reporte_pago_cancelado', [
             'nombre' => $user_cliente->name,
             'id_orden' => $reporte_pago->id_orden ? $reporte_pago->id_orden : '',
-            'id_plan_membresia' => $reporte_pago->id_plan_membresia ? $reporte_pago->id_plan_membresia : '',
+            //'id_plan_membresia' => $plan_membresia->id_plan_membresia ? $plan_membresia->id_plan_membresia : '',
             'nombre_plan_membresia' => $plan_membresia ? $plan_membresia->nombre : '',
             'observaciones' => $data['observaciones'] ?? ''
         ]);

@@ -22,7 +22,7 @@ class ReportePago extends ApiModel
         'id_cliente',
         'id_admin',
         'id_orden',
-        'id_plan_membresia',
+        'id_membresia',
         'monto',
         'metodo_pago',
         'num_referencia',

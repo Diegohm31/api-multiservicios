@@ -4,11 +4,11 @@ namespace App\Models;
 
 use App\Models\ApiModel;
 
-class OrdenServicio extends ApiModel
+class Membresia extends ApiModel
 {
     const PADDING = 5;
-    protected $table = 'ordenes_servicios';
-    protected $primaryKey = 'id_orden_servicio';
+    protected $table = 'membresias';
+    protected $primaryKey = 'id_membresia';
     protected $keyType = 'string';
     public $incrementing = false;
     public $timestamps = false;
@@ -28,20 +28,11 @@ class OrdenServicio extends ApiModel
 
     // (Lista blanca): Especificas qué campos SI se pueden guardar masivamente
     protected $fillable = [
-        'id_orden',
-        'id_servicio',
-        'descripcion',
-        'cantidad',
-        'precio_materiales_unitario',
-        'precio_tipos_equipos_unitario',
-        'precio_mano_obra_unitario',
-        'precio_general_unitario',
-        'porcentaje_descuento',
-        'descuento_unitario',
-        'precio_neto_unitario',
-        'precio_a_pagar',
+        'id_cliente',
+        'id_plan_membresia',
+        'precio',
         'fecha_inicio',
         'fecha_fin',
+        'estado',
     ];
 }
-
