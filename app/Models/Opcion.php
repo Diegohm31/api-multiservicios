@@ -30,7 +30,7 @@ class Opcion extends ApiModel
     protected $fillable = [
         'nombre',
         'ruta',
-        'icono_path',
+        'descripcion',
         'es_categoria',
         'id_padre',
     ];

@@ -16,6 +16,7 @@ class ReportePagoService
             ->leftJoin('membresias', 'reportes_pagos.id_membresia', '=', 'membresias.id_membresia')
             ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
             ->select('reportes_pagos.*', 'clientes.nombre as cliente_nombre', 'clientes.cedula as cliente_cedula', 'admins.nombre as admin_nombre', 'ordenes.id_orden as orden_id_orden', 'planes_membresias.nombre as plan_membresia_nombre')
+            ->orderBy('reportes_pagos.id_reporte_pago', 'asc')
             ->get();
         return $reportes_pagos;
     }

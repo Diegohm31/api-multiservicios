@@ -20,6 +20,10 @@ class OpcionController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:100',
+            'ruta' => 'required|string|max:1000',
+            'descripcion' => 'nullable|string|max:1000',
+            'es_categoria' => 'required|boolean',
+            'id_padre' => 'nullable|string|max:100',
         ]);
 
         $data = $request->all();
@@ -42,11 +46,15 @@ class OpcionController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nombre' => 'string|max:100',
+            'nombre' => 'nullable|string|max:100',
+            'ruta' => 'nullable|string|max:1000',
+            'descripcion' => 'nullable|string|max:1000',
+            'es_categoria' => 'nullable|boolean',
+            'id_padre' => 'nullable|string|max:100',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('nombre')) {
+        if (!$request->has('nombre') && !$request->has('ruta') && !$request->has('descripcion') && !$request->has('es_categoria') && !$request->has('id_padre')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();

@@ -12,7 +12,7 @@ class MovimientoMaterialService
 {
     public static function getAll()
     {
-        $movimientos = MovimientoMaterial::get();
+        $movimientos = MovimientoMaterial::orderBy('id_movimiento_material', 'asc')->get();
         return $movimientos;
     }
 

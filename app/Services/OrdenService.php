@@ -19,6 +19,7 @@ class OrdenService
             ->join('clientes', 'ordenes.id_cliente', '=', 'clientes.id_cliente')
             ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
+            ->orderBy('ordenes.id_orden', 'asc')
             ->get();
         return $ordenes;
     }
@@ -77,6 +78,7 @@ class OrdenService
         $ordenes = Orden::where('id_cliente', $id_cliente)
             ->select('*')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
+            ->orderBy('ordenes.id_orden', 'asc')
             ->get();
         return $ordenes;
     }
@@ -96,6 +98,7 @@ class OrdenService
             ->whereIn('ordenes.estado', ['En espera', 'En ejecucion', 'Completada'])
             ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
+            ->orderBy('ordenes.id_orden', 'asc')
             ->distinct()
             ->get();
         return $ordenes;
