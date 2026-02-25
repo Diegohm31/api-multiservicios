@@ -8,7 +8,6 @@ class ReportePagoService
 {
     public static function getAll()
     {
-        //inner join con la tabla clientes y left join con la tabla admins
         $reportes_pagos = DB::table('reportes_pagos')
             ->join('clientes', 'reportes_pagos.id_cliente', '=', 'clientes.id_cliente')
             ->leftJoin('admins', 'reportes_pagos.id_admin', '=', 'admins.id_admin')
@@ -16,6 +15,21 @@ class ReportePagoService
             ->leftJoin('membresias', 'reportes_pagos.id_membresia', '=', 'membresias.id_membresia')
             ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
             ->select('reportes_pagos.*', 'clientes.nombre as cliente_nombre', 'clientes.cedula as cliente_cedula', 'admins.nombre as admin_nombre', 'ordenes.id_orden as orden_id_orden', 'planes_membresias.nombre as plan_membresia_nombre')
+            ->orderBy('reportes_pagos.id_reporte_pago', 'asc')
+            ->get();
+        return $reportes_pagos;
+    }
+
+    public static function getAllByCliente($id_cliente)
+    {
+        $reportes_pagos = DB::table('reportes_pagos')
+            ->join('clientes', 'reportes_pagos.id_cliente', '=', 'clientes.id_cliente')
+            ->leftJoin('admins', 'reportes_pagos.id_admin', '=', 'admins.id_admin')
+            ->leftJoin('ordenes', 'reportes_pagos.id_orden', '=', 'ordenes.id_orden')
+            ->leftJoin('membresias', 'reportes_pagos.id_membresia', '=', 'membresias.id_membresia')
+            ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
+            ->select('reportes_pagos.*', 'clientes.nombre as cliente_nombre', 'clientes.cedula as cliente_cedula', 'admins.nombre as admin_nombre', 'ordenes.id_orden as orden_id_orden', 'planes_membresias.nombre as plan_membresia_nombre')
+            ->where('reportes_pagos.id_cliente', $id_cliente)
             ->orderBy('reportes_pagos.id_reporte_pago', 'asc')
             ->get();
         return $reportes_pagos;
@@ -29,7 +43,6 @@ class ReportePagoService
 
     public static function getOneAllInfo($id)
     {
-        //inner join con la tabla clientes y left join con la tabla admins
         $reporte_pago = DB::table('reportes_pagos')
             ->join('clientes', 'reportes_pagos.id_cliente', '=', 'clientes.id_cliente')
             ->leftJoin('admins', 'reportes_pagos.id_admin', '=', 'admins.id_admin')

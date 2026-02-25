@@ -15,9 +15,16 @@ use App\Models\User;
 
 class ReportePagoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reportes_pagos = ReportePagoService::getAll();
+        $user = $request->user();
+
+        if ($user->id_rol == "00003") {
+            $reportes_pagos = ReportePagoService::getAll();
+        } else {
+            $cliente = ClienteService::getOneByUser($user->id);
+            $reportes_pagos = ReportePagoService::getAllByCliente($cliente->id_cliente);
+        }
         return $this->successResponse(
             $reportes_pagos,
             $reportes_pagos->isEmpty() ? 'No se encontraron reportes de pagos' : 'Reportes de pagos obtenidos correctamente'
@@ -33,6 +40,7 @@ class ReportePagoController extends Controller
         $request->validate([
             'id_orden' => 'nullable|exists:ordenes,id_orden',
             'id_membresia' => 'nullable|exists:membresias,id_membresia',
+            'id_cuenta_bancaria' => 'required|exists:cuentas_bancarias,id_cuenta_bancaria',
             'monto' => 'required|numeric',
             'metodo_pago' => 'required|string|max:100',
             'num_referencia' => 'required|string|max:100',
@@ -79,10 +87,11 @@ class ReportePagoController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'id_cliente' => 'nullable|exists:clientes,id',
-            'id_admin' => 'nullable|exists:admins,id',
-            'id_orden' => 'nullable|exists:ordenes,id',
-            'id_plan_membresia' => 'nullable|exists:planes_membresias,id',
+            'id_cliente' => 'nullable|exists:clientes,id_cliente',
+            'id_admin' => 'nullable|exists:admins,id_admin',
+            'id_orden' => 'nullable|exists:ordenes,id_orden',
+            'id_membresia' => 'nullable|exists:membresias,id_membresia',
+            'id_cuenta_bancaria' => 'nullable|exists:cuentas_bancarias,id_cuenta_bancaria',
             'monto' => 'nullable|numeric',
             'metodo_pago' => 'nullable|string|max:100',
             'num_referencia' => 'nullable|string|max:100',
@@ -95,7 +104,7 @@ class ReportePagoController extends Controller
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('id_cliente') && !$request->has('id_admin') && !$request->has('id_orden') && !$request->has('id_plan_membresia') && !$request->has('monto') && !$request->has('metodo_pago') && !$request->has('num_referencia') && !$request->has('image') && !$request->has('imagePath') && !$request->has('estado') && !$request->has('fecha_emision') && !$request->has('fecha_validacion') && !$request->has('observaciones')) {
+        if (!$request->has('id_cliente') && !$request->has('id_admin') && !$request->has('id_orden') && !$request->has('id_membresia') && !$request->has('id_cuenta_bancaria') && !$request->has('monto') && !$request->has('metodo_pago') && !$request->has('num_referencia') && !$request->has('image') && !$request->has('imagePath') && !$request->has('estado') && !$request->has('fecha_emision') && !$request->has('fecha_validacion') && !$request->has('observaciones')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();

@@ -12,6 +12,12 @@ class OperativoService
         return $operativos;
     }
 
+    public static function getAllWithDeleted()
+    {
+        $operativos = Operativo::get();
+        return $operativos;
+    }
+
     public static function getOne($id)
     {
         $operativo = Operativo::where('is_deleted', false)->find($id);
@@ -60,6 +66,12 @@ class OperativoService
         //borrado logico
         $operativo->update(['is_deleted' => true]);
         DB::commit();
+        return $operativo;
+    }
+
+    public static function getOneByUser($id)
+    {
+        $operativo = Operativo::where('id_user', $id)->first();
         return $operativo;
     }
 }

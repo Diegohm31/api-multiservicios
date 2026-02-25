@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\ClienteService;
+use App\Services\UserService;
 
 class ClienteController extends Controller
 {
@@ -35,7 +36,7 @@ class ClienteController extends Controller
             'nombre' => 'string|max:100',
             'cedula' => 'string|max:11|unique:clientes,cedula',
             'telefono' => 'string|max:11|unique:clientes,telefono',
-            'direccion' => 'string|max:100',
+            'direccion' => 'string|max:1000',
         ]);
 
         // validar que al menos un campo sea modificado
@@ -59,6 +60,12 @@ class ClienteController extends Controller
         if (!$cliente) {
             return $this->errorResponse('Cliente no encontrado', 404);
         }
+
+        $user = UserService::delete($cliente->id_user);
+        if (!$user) {
+            return $this->errorResponse('Usuario no encontrado', 404);
+        }
+
         return $this->successResponse($cliente, 'Cliente eliminado correctamente');
     }
 

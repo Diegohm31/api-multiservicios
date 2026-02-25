@@ -25,6 +25,7 @@ class ClienteService
 
         DB::beginTransaction();
         $data['nombre'] = $data['name'];
+        $data['is_deleted'] = 0;
         $cliente = Cliente::create($data);
 
         DB::commit();
@@ -55,7 +56,8 @@ class ClienteService
         }
 
         DB::beginTransaction();
-        $cliente->delete();
+        $cliente->is_deleted = 1;
+        $cliente->save();
         DB::commit();
         return $cliente;
     }

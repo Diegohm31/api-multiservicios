@@ -29,6 +29,8 @@ use App\Http\Controllers\AvanceOrdenController;
 use App\Http\Controllers\PlanMembresiaController;
 use App\Http\Controllers\PlanMembresiaTipoServicioController;
 use App\Http\Controllers\MembresiaController;
+use App\Http\Controllers\EmpresaController;
+use App\Http\Controllers\CuentaBancariaController;
 
 // rutas para la autenticacion
 Route::post('/register', [AuthController::class, 'register']);
@@ -60,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reportes-pagos/cancelar', [ReportePagoController::class, 'cancelarReportePago']);
     Route::put('/ordenes/{id}/poner-en-ejecucion', [OrdenController::class, 'ponerEnEjecucion']);
     Route::get('/ordenes/{id}/avances', [OrdenController::class, 'getOneOrdenAvances']);
+    Route::get('/operativos/with-deleted', [OperativoController::class, 'indexWithDeleted']);
 
     Route::apiResources([
         'clientes' => ClienteController::class,
@@ -87,6 +90,8 @@ Route::middleware('auth:sanctum')->group(function () {
         'planes-membresias' => PlanMembresiaController::class,
         'planes-membresias-tipos-servicios' => PlanMembresiaTipoServicioController::class,
         'membresias' => MembresiaController::class,
+        'empresas' => EmpresaController::class,
+        'cuentas-bancarias' => CuentaBancariaController::class,
     ]);
 
     Route::get('/tipos-servicios/{id}', [TipoServicioController::class, 'show']);
@@ -95,9 +100,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/tipos-servicios/{id}', [TipoServicioController::class, 'destroy']);
     Route::get('/catalogo-servicios', [ServicioController::class, 'catalogoServicios']);
 
+    Route::put('/usuarios/{id}/cambiar-estado', [AuthController::class, 'cambiarEstado']);
     Route::get('/menu', [AuthController::class, 'getMenu']);
     Route::get('/menu/{id_padre}', [AuthController::class, 'getMenuByPadre']);
     Route::get('/user', [AuthController::class, 'getUser']);
+    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/user/verify-email', [AuthController::class, 'verifyEmailChange']);
+    Route::post('/user/password', [AuthController::class, 'updatePassword']);
+    Route::post('/enviar-duda', [AuthController::class, 'enviarDudaHelpCenter']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 

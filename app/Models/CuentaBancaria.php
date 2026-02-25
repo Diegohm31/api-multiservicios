@@ -4,11 +4,11 @@ namespace App\Models;
 
 use App\Models\ApiModel;
 
-class Cliente extends ApiModel
+class CuentaBancaria extends ApiModel
 {
     const PADDING = 5;
-    protected $table = 'clientes';
-    protected $primaryKey = 'id_cliente';
+    protected $table = 'cuentas_bancarias';
+    protected $primaryKey = 'id_cuenta_bancaria';
     protected $keyType = 'string';
     public $incrementing = false;
     public $timestamps = false;
@@ -28,12 +28,11 @@ class Cliente extends ApiModel
 
     // (Lista blanca): Especificas qué campos SI se pueden guardar masivamente
     protected $fillable = [
-        'id_user',
-        'nombre',
-        'cedula',
+        'id_empresa',
+        'banco',
+        'tipo_cuenta',
         'telefono',
-        'direccion',
-        'is_deleted'
+        'numero_cuenta',
+        'pago_movil'
     ];
 }
-

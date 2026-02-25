@@ -4,11 +4,11 @@ namespace App\Models;
 
 use App\Models\ApiModel;
 
-class Cliente extends ApiModel
+class Empresa extends ApiModel
 {
     const PADDING = 5;
-    protected $table = 'clientes';
-    protected $primaryKey = 'id_cliente';
+    protected $table = 'empresa';
+    protected $primaryKey = 'id_empresa';
     protected $keyType = 'string';
     public $incrementing = false;
     public $timestamps = false;
@@ -28,12 +28,10 @@ class Cliente extends ApiModel
 
     // (Lista blanca): Especificas qué campos SI se pueden guardar masivamente
     protected $fillable = [
-        'id_user',
         'nombre',
-        'cedula',
+        'correo',
         'telefono',
         'direccion',
-        'is_deleted'
+        'rif',
     ];
 }
-

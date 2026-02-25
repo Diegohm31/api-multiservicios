@@ -25,6 +25,21 @@ class OperativoController extends Controller
         );
     }
 
+    public function indexWithDeleted()
+    {
+        $operativos = OperativoService::getAllWithDeleted();
+
+        //ciclo obteniendo el array_especialidades de cada operativo
+        foreach ($operativos as $operativo) {
+            $operativo->array_especialidades = OperativoEspecialidadService::getOneByOperativo($operativo->id_operativo);
+        }
+
+        return $this->successResponse(
+            $operativos,
+            $operativos->isEmpty() ? 'No se encontraron operativos' : 'Operativos obtenidos correctamente'
+        );
+    }
+
     public function store(Request $request)
     {
         $request->validate([
