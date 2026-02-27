@@ -37,6 +37,9 @@ class PresupuestoController extends Controller
             'total_mano_obra' => 'required|numeric',
             'total_general' => 'required|numeric',
             'total_descuento' => 'required|numeric',
+            'sub_total' => 'required|numeric',
+            'porcentaje_iva' => 'required|numeric',
+            'iva' => 'required|numeric',
             'total_a_pagar' => 'required|numeric',
             'array_servicios' => 'required|array',
         ]);
@@ -160,13 +163,16 @@ class PresupuestoController extends Controller
             'total_mano_obra' => 'nullable|numeric',
             'total_general' => 'nullable|numeric',
             'total_descuento' => 'nullable|numeric',
+            'sub_total' => 'nullable|numeric',
+            'porcentaje_iva' => 'nullable|numeric',
+            'iva' => 'nullable|numeric',
             'total_a_pagar' => 'nullable|numeric',
             'estado' => 'nullable|string|max:50',
             'fecha_emision' => 'nullable|date',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('id_admin') && !$request->has('total_materiales') && !$request->has('total_equipos') && !$request->has('total_mano_obra') && !$request->has('total_general') && !$request->has('total_descuento') && !$request->has('total_a_pagar') && !$request->has('estado') && !$request->has('fecha_emision')) {
+        if (!$request->has('id_admin') && !$request->has('total_materiales') && !$request->has('total_equipos') && !$request->has('total_mano_obra') && !$request->has('total_general') && !$request->has('total_descuento') && !$request->has('sub_total') && !$request->has('porcentaje_iva') && !$request->has('iva') && !$request->has('total_a_pagar') && !$request->has('estado') && !$request->has('fecha_emision')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();
