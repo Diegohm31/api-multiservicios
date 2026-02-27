@@ -7,6 +7,9 @@ use App\Models\ApiModel;
 class Empresa extends ApiModel
 {
     const PADDING = 5;
+    const IMAGE_PATH = 'empresa';
+    const IMAGE_FIELD = 'image'; // campo que guarda el nombre original de la imagen
+    const IMAGE_PATH_FIELD = 'imagePath'; // campo que guarda la ruta relativa de la imagen
     protected $table = 'empresa';
     protected $primaryKey = 'id_empresa';
     protected $keyType = 'string';
@@ -33,5 +36,8 @@ class Empresa extends ApiModel
         'telefono',
         'direccion',
         'rif',
+        'porcentaje_iva',
+        'image',
+        'imagePath',
     ];
 }

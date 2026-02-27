@@ -136,6 +136,7 @@ class ReportePagoController extends Controller
 
         $data = $request->all();
         $plan_membresia = null;
+        $membresia = null;
 
         if ($data['id_orden']) {
             $id_orden = $data['id_orden'];

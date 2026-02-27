@@ -24,6 +24,8 @@ class EmpresaController extends Controller
             'telefono' => 'required|string|max:100',
             'direccion' => 'required|string|max:1000',
             'rif' => 'required|string|max:100',
+            'porcentaje_iva' => 'required|numeric',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $data = $request->all();
@@ -51,10 +53,12 @@ class EmpresaController extends Controller
             'telefono' => 'nullable|string|max:100',
             'direccion' => 'nullable|string|max:1000',
             'rif' => 'nullable|string|max:100',
+            'porcentaje_iva' => 'nullable|numeric',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('nombre') && !$request->has('correo') && !$request->has('telefono') && !$request->has('direccion') && !$request->has('rif')) {
+        if (!$request->has('nombre') && !$request->has('correo') && !$request->has('telefono') && !$request->has('direccion') && !$request->has('rif') && !$request->has('porcentaje_iva') && !$request->has('image')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();
