@@ -14,6 +14,7 @@ use App\Services\ClienteService;
 use App\Models\User;
 use App\Services\MailerService;
 use App\Services\NotificacionService;
+use App\Services\PDFService;
 
 class PresupuestoController extends Controller
 {
@@ -140,6 +141,15 @@ class PresupuestoController extends Controller
             'fecha_envio' => date('Y-m-d H:i:s'),
         ]);
 
+        // Generar PDF automáticamente (Ahora que la orden y servicios están vinculados)
+        $empresa = \App\Models\Empresa::first();
+        $serviciosPDF = OrdenServicioService::getOneByOrden($orden->id_orden);
+        $pdfPath = PDFService::generarPresupuestoPDF($presupuesto, $orden, $cliente, $empresa, $serviciosPDF);
+        if ($pdfPath) {
+            $presupuesto->pdf_factura = $pdfPath;
+            $presupuesto->save();
+        }
+
         if (!$presupuesto) {
             return $this->errorResponse('No se pudo crear el presupuesto', 404);
         }
@@ -167,12 +177,13 @@ class PresupuestoController extends Controller
             'porcentaje_iva' => 'nullable|numeric',
             'iva' => 'nullable|numeric',
             'total_a_pagar' => 'nullable|numeric',
+            'pdf_factura' => 'nullable|string|max:1000',
             'estado' => 'nullable|string|max:50',
             'fecha_emision' => 'nullable|date',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('id_admin') && !$request->has('total_materiales') && !$request->has('total_equipos') && !$request->has('total_mano_obra') && !$request->has('total_general') && !$request->has('total_descuento') && !$request->has('sub_total') && !$request->has('porcentaje_iva') && !$request->has('iva') && !$request->has('total_a_pagar') && !$request->has('estado') && !$request->has('fecha_emision')) {
+        if (!$request->has('id_admin') && !$request->has('total_materiales') && !$request->has('total_equipos') && !$request->has('total_mano_obra') && !$request->has('total_general') && !$request->has('total_descuento') && !$request->has('sub_total') && !$request->has('porcentaje_iva') && !$request->has('iva') && !$request->has('total_a_pagar') && !$request->has('pdf_factura') && !$request->has('estado') && !$request->has('fecha_emision')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();
