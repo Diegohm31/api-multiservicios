@@ -9,6 +9,7 @@ use App\Services\NotificacionService;
 use App\Services\ClienteService;
 use App\Models\User;
 use App\Services\MailerService;
+use Illuminate\Support\Carbon;
 
 class MembresiaService
 {
@@ -85,7 +86,7 @@ class MembresiaService
         $membresias = Membresia::where('estado', 'Activa')->get();
         /** @var Membresia $membresia */
         foreach ($membresias as $membresia) {
-            if ($membresia->fecha_fin <= now()) {
+            if (Carbon::parse($membresia->fecha_fin)->isToday()) {
                 $membresia->estado = 'Inactiva';
                 $membresia->save();
 
@@ -118,7 +119,8 @@ class MembresiaService
         $membresias = Membresia::where('estado', 'Activa')->get();
         /** @var Membresia $membresia */
         foreach ($membresias as $membresia) {
-            if ($membresia->fecha_fin == now()->addDays(7)) {
+            // Comparar solo la fecha, ignorando la hora
+            if (Carbon::parse($membresia->fecha_fin)->isSameDay(Carbon::now()->addDays(7))) {
                 //buscar al cliente
                 $cliente = ClienteService::getOne($membresia->id_cliente);
                 //buscar al usuario
