@@ -42,6 +42,9 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/send-confirmation-email', [AuthController::class, 'sendConfirmationEmail']);
 
 Route::get('/tipos-servicios', [TipoServicioController::class, 'index']);
+Route::get('/empresas', [EmpresaController::class, 'index']);
+Route::get('/planes-membresias', [PlanMembresiaController::class, 'index']);
+Route::post('/enviar-duda', [AuthController::class, 'enviarDudaHelpCenter']);
 
 // proteger con sanctum
 Route::middleware('auth:sanctum')->group(function () {
@@ -87,12 +90,20 @@ Route::middleware('auth:sanctum')->group(function () {
         'reportes-pagos' => ReportePagoController::class,
         'notificaciones' => NotificacionController::class,
         'avances-ordenes' => AvanceOrdenController::class,
-        'planes-membresias' => PlanMembresiaController::class,
-        'planes-membresias-tipos-servicios' => PlanMembresiaTipoServicioController::class,
         'membresias' => MembresiaController::class,
-        'empresas' => EmpresaController::class,
+        'planes-membresias-tipos-servicios' => PlanMembresiaTipoServicioController::class,
         'cuentas-bancarias' => CuentaBancariaController::class,
     ]);
+
+    Route::get('/planes-membresias/{id}', [PlanMembresiaController::class, 'show']);
+    Route::post('/planes-membresias', [PlanMembresiaController::class, 'store']);
+    Route::put('/planes-membresias/{id}', [PlanMembresiaController::class, 'update']);
+    Route::delete('/planes-membresias/{id}', [PlanMembresiaController::class, 'destroy']);
+
+    Route::get('/membresias/{id}', [MembresiaController::class, 'show']);
+    Route::post('/membresias', [MembresiaController::class, 'store']);
+    Route::put('/membresias/{id}', [MembresiaController::class, 'update']);
+    Route::delete('/membresias/{id}', [MembresiaController::class, 'destroy']);
 
     Route::get('/tipos-servicios/{id}', [TipoServicioController::class, 'show']);
     Route::post('/tipos-servicios', [TipoServicioController::class, 'store']);
@@ -107,7 +118,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/user/verify-email', [AuthController::class, 'verifyEmailChange']);
     Route::post('/user/password', [AuthController::class, 'updatePassword']);
-    Route::post('/enviar-duda', [AuthController::class, 'enviarDudaHelpCenter']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 

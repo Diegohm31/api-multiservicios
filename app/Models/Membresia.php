@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Models\ApiModel;
 
+/**
+ * @mixin \Eloquent
+ */
 class Membresia extends ApiModel
 {
     const PADDING = 5;
@@ -34,5 +37,10 @@ class Membresia extends ApiModel
         'fecha_inicio',
         'fecha_fin',
         'estado',
+    ];
+
+    protected $casts = [
+        'fecha_inicio' => 'date',
+        'fecha_fin' => 'date',
     ];
 }

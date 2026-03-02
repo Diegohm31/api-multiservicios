@@ -5,6 +5,10 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Membresia;
 use App\Services\PlanMembresiaService;
 use App\Services\PlanMembresiaTipoServicioService;
+use App\Services\NotificacionService;
+use App\Services\ClienteService;
+use App\Models\User;
+use App\Services\MailerService;
 
 class MembresiaService
 {
@@ -54,7 +58,8 @@ class MembresiaService
         }
 
         DB::beginTransaction();
-        $membresia->delete();
+        $membresia->estado = 'Inactiva';
+        $membresia->save();
         DB::commit();
         return $membresia;
     }
@@ -73,5 +78,67 @@ class MembresiaService
             }
         }
         return $membresia;
+    }
+
+    public static function checkMembresias()
+    {
+        $membresias = Membresia::where('estado', 'Activa')->get();
+        /** @var Membresia $membresia */
+        foreach ($membresias as $membresia) {
+            if ($membresia->fecha_fin <= now()) {
+                $membresia->estado = 'Inactiva';
+                $membresia->save();
+
+                //buscar al cliente
+                $cliente = ClienteService::getOne($membresia->id_cliente);
+                //buscar al usuario
+                $user = User::find($cliente->id_user);
+                //buscar el plan
+                $plan = PlanMembresiaService::getOne($membresia->id_plan_membresia);
+
+                MailerService::enviarCorreo([
+                    'to' => [$user->email],
+                    'cc' => [],
+                    'bcc' => [],
+                ], 'Membresia Inactivada', 'emails.membresia_inactivada', ['nombre' => $user->name, 'nombre_plan' => $plan->nombre]);
+
+                //grabar registro en la tabla notificaciones
+                $notificacion = NotificacionService::store([
+                    'id_user' => $user->id,
+                    'asunto' => 'Membresia Inactivada',
+                    'fecha_envio' => date('Y-m-d H:i:s'),
+                ]);
+            }
+        }
+    }
+
+    public static function warningMembresias()
+    {
+        //enviar correo de aviso de vencimiento de membresia 7 dias antes de vencer
+        $membresias = Membresia::where('estado', 'Activa')->get();
+        /** @var Membresia $membresia */
+        foreach ($membresias as $membresia) {
+            if ($membresia->fecha_fin == now()->addDays(7)) {
+                //buscar al cliente
+                $cliente = ClienteService::getOne($membresia->id_cliente);
+                //buscar al usuario
+                $user = User::find($cliente->id_user);
+                //buscar el plan
+                $plan = PlanMembresiaService::getOne($membresia->id_plan_membresia);
+
+                MailerService::enviarCorreo([
+                    'to' => [$user->email],
+                    'cc' => [],
+                    'bcc' => [],
+                ], 'Membresia Por Vencer', 'emails.membresia_por_vencer', ['nombre' => $user->name, 'nombre_plan' => $plan->nombre]);
+
+                //grabar registro en la tabla notificaciones
+                $notificacion = NotificacionService::store([
+                    'id_user' => $user->id,
+                    'asunto' => 'Membresia Por Vencer',
+                    'fecha_envio' => date('Y-m-d H:i:s'),
+                ]);
+            }
+        }
     }
 }

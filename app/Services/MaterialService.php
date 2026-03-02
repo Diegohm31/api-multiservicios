@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Material;
 use App\Models\ServicioMaterial;
 use App\Models\Servicio;
+use App\Services\MovimientoMaterialService;
 
 class MaterialService
 {
@@ -82,4 +83,14 @@ class MaterialService
         return $material;
     }
 
+    public static function warningStock()
+    {
+        // Usamos whereColumn para comparar dos columnas de la misma tabla
+        $materiales = Material::whereColumn('stock_actual', '<', 'stock_minimo')->get();
+
+        if ($materiales->isNotEmpty()) {
+            // Enviar un único correo consolidado a cada administrador
+            MovimientoMaterialService::notificarVariosStockBajo($materiales->all());
+        }
+    }
 }
