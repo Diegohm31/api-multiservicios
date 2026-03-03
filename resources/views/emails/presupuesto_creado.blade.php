@@ -11,6 +11,8 @@
         <h2 style="color: #28a745; text-align: center;">¡Presupuesto Creado!</h2>
         <p>Hola, {{ $nombre }}</p>
         <p>Te informamos que el presupuesto de la orden #{{ $id_orden }} ha sido creado.</p>
+        <p>Fecha de emision: {{ date('d/m/Y', strtotime($fecha_emision)) }}</p>
+        <p>Fecha de vencimiento: {{ date('d/m/Y', strtotime($fecha_vencimiento)) }}</p>
         <p>Haz clic en el siguiente botón para ver el presupuesto:</p>
         <div style="text-align: center; margin-top: 30px;">
             <a href="{{ $url }}"

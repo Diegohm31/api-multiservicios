@@ -16,3 +16,6 @@ Schedule::command('app:warning-membresias')->dailyAt('00:00');
 
 // enviar correo de aviso de alerta de stock de materiales solo los lunes
 Schedule::command('app:warning-stock')->weeklyOn(1, '00:00');
+
+// verificar presupuestos por vencer
+Schedule::command('app:check-presupuestos')->dailyAt('00:00');

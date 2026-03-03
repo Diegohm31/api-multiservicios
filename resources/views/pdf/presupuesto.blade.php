@@ -224,7 +224,7 @@
         <tbody>
             <tr>
                 <td>{{ date('d-m-Y', strtotime($presupuesto->fecha_emision)) }}</td>
-                <td>{{ date('d-m-Y', strtotime($presupuesto->fecha_emision . ' + 30 days')) }}</td>
+                <td>{{ date('d-m-Y', strtotime($presupuesto->fecha_vencimiento)) }}</td>
                 <td>{{ $presupuesto->estado }}</td>
             </tr>
         </tbody>

@@ -41,6 +41,7 @@ class Presupuesto extends ApiModel
         'pdf_factura',
         'estado',
         'fecha_emision',
+        'fecha_vencimiento',
     ];
 }
 

@@ -19,7 +19,7 @@ class CheckMembresias extends Command
      *
      * @var string
      */
-    protected $description = 'Check memberships';
+    protected $description = 'Verifica las membresias que estan por vencer y envia un correo de aviso';
 
     /**
      * Execute the console command.

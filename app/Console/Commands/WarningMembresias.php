@@ -19,7 +19,7 @@ class WarningMembresias extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Envía correos de aviso de vencimiento de membresias 7 dias antes de vencer';
 
     /**
      * Execute the console command.

@@ -132,7 +132,7 @@ class PresupuestoController extends Controller
             'to' => [$user->email],
             'cc' => [],
             'bcc' => [],
-        ], 'Presupuesto creado', 'emails.presupuesto_creado', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'url' => $url]);
+        ], 'Presupuesto creado', 'emails.presupuesto_creado', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'url' => $url, 'fecha_emision' => $presupuesto->fecha_emision, 'fecha_vencimiento' => $presupuesto->fecha_vencimiento]);
 
         //grabar registro en la tabla notificaciones
         $notificacion = NotificacionService::store([
@@ -228,7 +228,7 @@ class PresupuestoController extends Controller
         if (!$orden) {
             return $this->errorResponse('Orden no encontrada', 404);
         }
-        $orden->estado = 'Cancelada';
+        $orden->estado = 'Aceptada';
         $orden->save();
 
         $presupuesto = PresupuestoService::getOne($orden->id_presupuesto);

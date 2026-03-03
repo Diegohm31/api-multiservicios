@@ -19,7 +19,7 @@ class WarningStock extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Envía correos de alerta de stock bajo de materiales';
 
     /**
      * Execute the console command.
