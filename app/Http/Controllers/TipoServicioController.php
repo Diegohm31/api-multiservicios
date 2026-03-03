@@ -20,8 +20,8 @@ class TipoServicioController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'descripcion' => 'required|string|max:1000',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'descripcion' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
         $data = $request->all();
@@ -45,8 +45,8 @@ class TipoServicioController extends Controller
     {
         $request->validate([
             'nombre' => 'string|max:255',
-            'descripcion' => 'string|max:1000',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'descripcion' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
         // validar que al menos un campo sea modificado

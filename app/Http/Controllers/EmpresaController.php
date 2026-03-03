@@ -25,7 +25,7 @@ class EmpresaController extends Controller
             'direccion' => 'required|string|max:1000',
             'rif' => 'required|string|max:100',
             'porcentaje_iva' => 'required|numeric',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         $data = $request->all();
@@ -54,7 +54,7 @@ class EmpresaController extends Controller
             'direccion' => 'nullable|string|max:1000',
             'rif' => 'nullable|string|max:100',
             'porcentaje_iva' => 'nullable|numeric',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         // validar que al menos un campo sea modificado

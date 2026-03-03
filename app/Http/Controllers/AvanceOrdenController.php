@@ -23,7 +23,7 @@ class AvanceOrdenController extends Controller
             'id_operativo' => 'required|exists:operativos,id_operativo',
             'descripcion' => 'required|string|max:1000',
             'porcentaje_avance' => 'required|numeric|min:0|max:100',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
         $data = $request->all();
@@ -51,7 +51,7 @@ class AvanceOrdenController extends Controller
             'descripcion' => 'nullable|string|max:1000',
             'porcentaje_avance' => 'nullable|numeric|min:0|max:100',
             'fecha_avance' => 'nullable|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
         // validar que al menos un campo sea modificado

@@ -44,7 +44,7 @@ class ReportePagoController extends Controller
             'monto' => 'required|numeric',
             'metodo_pago' => 'required|string|max:100',
             'num_referencia' => 'required|string|max:100',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
         $data = $request->all();
@@ -95,7 +95,7 @@ class ReportePagoController extends Controller
             'monto' => 'nullable|numeric',
             'metodo_pago' => 'nullable|string|max:100',
             'num_referencia' => 'nullable|string|max:100',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
             'imagePath' => 'nullable|string|max:1000',
             'estado' => 'nullable|string|max:100',
             'fecha_emision' => 'nullable|date',

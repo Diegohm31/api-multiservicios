@@ -31,7 +31,7 @@ class ServicioController extends Controller
         $request->validate([
             'id_tipo_servicio' => 'required|exists:tipos_servicios,id_tipo_servicio',
             'nombre' => 'required|string|max:1000',
-            'descripcion' => 'required|string|max:1000',
+            'descripcion' => 'nullable|string|max:1000',
             'unidad_medida' => 'required|string|max:100',
             'servicio_tabulado' => 'required|boolean',
             'precio_materiales' => 'nullable|numeric',
@@ -42,7 +42,7 @@ class ServicioController extends Controller
             'array_materiales' => 'nullable|array',
             'array_tipos_equipos' => 'nullable|array',
             'array_especialidades' => 'nullable|array',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
         $data = $request->all();
@@ -123,7 +123,7 @@ class ServicioController extends Controller
             'array_materiales' => 'nullable|array',
             'array_tipos_equipos' => 'nullable|array',
             'array_especialidades' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
         // validar que al menos un campo sea modificado
