@@ -31,6 +31,7 @@ class PlanMembresiaController extends Controller
             'duracion_meses' => 'required|numeric',
             'precio' => 'required|numeric',
             'array_tipos_servicios' => 'required|array',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
         $data = $request->all();
@@ -80,10 +81,12 @@ class PlanMembresiaController extends Controller
             'duracion_meses' => 'nullable|numeric',
             'precio' => 'nullable|numeric',
             'array_tipos_servicios' => 'nullable|array',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'imagePath' => 'nullable|string|max:1000',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('nombre') && !$request->has('descripcion') && !$request->has('duracion_meses') && !$request->has('precio') && !$request->has('array_tipos_servicios')) {
+        if (!$request->has('nombre') && !$request->has('descripcion') && !$request->has('duracion_meses') && !$request->has('precio') && !$request->has('array_tipos_servicios') && !$request->has('image') && !$request->has('imagePath')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
 

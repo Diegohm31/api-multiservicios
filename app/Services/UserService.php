@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Services\MembresiaService;
+use App\Services\ReportePagoService;
 
 class UserService
 {
@@ -41,6 +42,7 @@ class UserService
                 $user = User::join('clientes', 'users.id', '=', 'clientes.id_user')->where('users.id', $id)->first();
                 if ($user) {
                     $user->membresia_activa = MembresiaService::getActiveByCliente($user->id_cliente);
+                    $user->has_pending_membership_payment = ReportePagoService::hasPendingMembershipPayment($user->id_cliente);
                 }
                 break;
 

@@ -15,9 +15,15 @@ class OrdenService
             ->where('is_deleted', false);
 
         //join con tabla clientes para obtener el nombre y cedula del cliente
+        //join con membresias y planes para obtener el icono si tiene membresia activa
         $ordenes = DB::table('ordenes')
             ->join('clientes', 'ordenes.id_cliente', '=', 'clientes.id_cliente')
-            ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula')
+            ->leftJoin('membresias', function ($join) {
+                $join->on('clientes.id_cliente', '=', 'membresias.id_cliente')
+                    ->where('membresias.estado', '=', 'Activa');
+            })
+            ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
+            ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula', 'planes_membresias.imagePath as plan_image_path', 'planes_membresias.nombre as active_plan_nombre')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
             ->orderBy('ordenes.id_orden', 'asc')
             ->get();
@@ -92,11 +98,16 @@ class OrdenService
 
         $ordenes = DB::table('ordenes')
             ->join('clientes', 'ordenes.id_cliente', '=', 'clientes.id_cliente')
+            ->leftJoin('membresias', function ($join) {
+                $join->on('clientes.id_cliente', '=', 'membresias.id_cliente')
+                    ->where('membresias.estado', '=', 'Activa');
+            })
+            ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
             ->join('ordenes_servicios', 'ordenes.id_orden', '=', 'ordenes_servicios.id_orden')
             ->join('ordenes_servicios_operativos', 'ordenes_servicios.id_orden_servicio', '=', 'ordenes_servicios_operativos.id_orden_servicio')
             ->where('ordenes_servicios_operativos.id_operativo', $id_operativo)
             ->whereIn('ordenes.estado', ['En espera', 'En ejecucion', 'Completada'])
-            ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula')
+            ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula', 'planes_membresias.imagePath as plan_image_path', 'planes_membresias.nombre as active_plan_nombre')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
             ->orderBy('ordenes.id_orden', 'asc')
             ->distinct()
