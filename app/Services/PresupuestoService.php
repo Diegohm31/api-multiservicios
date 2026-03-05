@@ -80,6 +80,7 @@ class PresupuestoService
 
             $orden = Orden::where('id_presupuesto', $presupuesto->id_presupuesto)->first();
             $orden->estado = 'Aceptada';
+            $orden->id_presupuesto = null;
             $orden->save();
 
             //buscar al cliente

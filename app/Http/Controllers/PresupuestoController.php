@@ -228,10 +228,12 @@ class PresupuestoController extends Controller
         if (!$orden) {
             return $this->errorResponse('Orden no encontrada', 404);
         }
+        $id_presupuesto = $orden->id_presupuesto;
         $orden->estado = 'Aceptada';
+        $orden->id_presupuesto = null;
         $orden->save();
 
-        $presupuesto = PresupuestoService::getOne($orden->id_presupuesto);
+        $presupuesto = PresupuestoService::getOne($id_presupuesto);
         if (!$presupuesto) {
             return $this->errorResponse('Presupuesto no encontrado', 404);
         }

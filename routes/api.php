@@ -111,6 +111,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/tipos-servicios/{id}', [TipoServicioController::class, 'destroy']);
     Route::get('/catalogo-servicios', [ServicioController::class, 'catalogoServicios']);
 
+    Route::get('/empresas/{id}', [EmpresaController::class, 'show']);
+    Route::post('/empresas', [EmpresaController::class, 'store']);
+    Route::put('/empresas/{id}', [EmpresaController::class, 'update']);
+    Route::delete('/empresas/{id}', [EmpresaController::class, 'destroy']);
+
     Route::put('/usuarios/{id}/cambiar-estado', [AuthController::class, 'cambiarEstado']);
     Route::get('/menu', [AuthController::class, 'getMenu']);
     Route::get('/menu/{id_padre}', [AuthController::class, 'getMenuByPadre']);
