@@ -151,13 +151,19 @@ class OrdenController extends Controller
             $servicio->operativos_asignados = DB::table('ordenes_servicios_operativos')
                 ->join('operativos', 'ordenes_servicios_operativos.id_operativo', '=', 'operativos.id_operativo')
                 ->join('especialidades', 'ordenes_servicios_operativos.id_especialidad', '=', 'especialidades.id_especialidad')
+                ->join('ordenes_servicios_especialidades', function ($join) {
+                    $join->on('ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios_especialidades.id_orden_servicio')
+                        ->on('ordenes_servicios_operativos.id_especialidad', '=', 'ordenes_servicios_especialidades.id_especialidad');
+                })
                 ->where('ordenes_servicios_operativos.id_orden_servicio', $servicio->id_orden_servicio)
                 ->select(
                     'operativos.id_operativo',
                     'operativos.id_user',
                     'operativos.nombre as nombre_operativo',
                     'especialidades.nombre as nombre_especialidad',
-                    'ordenes_servicios_operativos.es_jefe'
+                    'especialidades.nivel',
+                    'ordenes_servicios_operativos.es_jefe',
+                    DB::raw('(ordenes_servicios_especialidades.horas_hombre * ordenes_servicios_especialidades.tarifa_hora) as ingreso')
                 )
                 ->get();
         }

@@ -96,6 +96,17 @@ class OrdenService
             ->whereColumn('avances_ordenes.id_orden', 'ordenes.id_orden')
             ->where('is_deleted', false);
 
+        // Subconsulta para calcular el ingreso acumulado del operativo en la orden
+        $ingresoSub = DB::table('ordenes_servicios')
+            ->join('ordenes_servicios_operativos', 'ordenes_servicios.id_orden_servicio', '=', 'ordenes_servicios_operativos.id_orden_servicio')
+            ->join('ordenes_servicios_especialidades', function($join) {
+                $join->on('ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios_especialidades.id_orden_servicio')
+                     ->on('ordenes_servicios_operativos.id_especialidad', '=', 'ordenes_servicios_especialidades.id_especialidad');
+            })
+            ->whereColumn('ordenes_servicios.id_orden', 'ordenes.id_orden')
+            ->where('ordenes_servicios_operativos.id_operativo', $id_operativo)
+            ->selectRaw('COALESCE(SUM(ordenes_servicios_especialidades.horas_hombre * ordenes_servicios_especialidades.tarifa_hora), 0)');
+
         $ordenes = DB::table('ordenes')
             ->join('clientes', 'ordenes.id_cliente', '=', 'clientes.id_cliente')
             ->leftJoin('membresias', function ($join) {
@@ -109,6 +120,7 @@ class OrdenService
             ->whereIn('ordenes.estado', ['En espera', 'En ejecucion', 'Completada'])
             ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula', 'planes_membresias.imagePath as plan_image_path', 'planes_membresias.nombre as active_plan_nombre')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
+            ->selectSub($ingresoSub, 'ingreso_operativo')
             ->orderBy('ordenes.id_orden', 'asc')
             ->distinct()
             ->get();
