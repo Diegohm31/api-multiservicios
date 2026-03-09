@@ -8,13 +8,20 @@ class OperativoService
 {
     public static function getAll()
     {
-        $operativos = Operativo::where('is_deleted', false)->get();
+        $operativos = DB::table('operativos')
+            ->join('users', 'operativos.id_user', '=', 'users.id')
+            ->select('operativos.*', 'users.email as correo')
+            ->where('operativos.is_deleted', false)
+            ->get();
         return $operativos;
     }
 
     public static function getAllWithDeleted()
     {
-        $operativos = Operativo::get();
+        $operativos = DB::table('operativos')
+            ->join('users', 'operativos.id_user', '=', 'users.id')
+            ->select('operativos.*', 'users.email as correo')
+            ->get();
         return $operativos;
     }
 

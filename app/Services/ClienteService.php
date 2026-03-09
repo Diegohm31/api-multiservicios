@@ -10,7 +10,10 @@ class ClienteService
 {
     public static function getAll()
     {
-        $clientes = Cliente::get();
+        $clientes = DB::table('clientes')
+            ->join('users', 'clientes.id_user', '=', 'users.id')
+            ->select('clientes.*', 'users.email as correo')
+            ->get();
         return $clientes;
     }
 
