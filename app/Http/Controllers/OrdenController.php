@@ -568,11 +568,15 @@ class OrdenController extends Controller
     {
         $operativosAsignados = DB::table('ordenes_servicios_operativos')
             ->join('ordenes_servicios', 'ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+            ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
             ->select('ordenes_servicios_operativos.*', 'ordenes_servicios.id_orden')
             ->get();
 
         $equiposAsignados = DB::table('ordenes_servicios_equipos')
             ->join('ordenes_servicios', 'ordenes_servicios_equipos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+            ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
             ->select('ordenes_servicios_equipos.*', 'ordenes_servicios.id_orden')
             ->get();
 
