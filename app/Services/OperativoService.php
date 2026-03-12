@@ -71,7 +71,7 @@ class OperativoService
 
         DB::beginTransaction();
         //borrado logico
-        $operativo->update(['is_deleted' => true]);
+        $operativo->update(['is_deleted' => true, 'disponible' => false]);
         DB::commit();
         return $operativo;
     }

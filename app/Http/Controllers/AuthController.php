@@ -94,13 +94,12 @@ class AuthController extends Controller
             ], 401);
         }
 
-        //validar que el cliente esta activo
-        // $cliente = Cliente::where('correo', $user->email)->first();
-        // if ($cliente->activo == 0) {
-        //     return response([
-        //         'message' => 'El cliente no esta activo',
-        //     ], 401);
-        // }
+        // Validar que el usuario esté activo (especialmente para clientes y operativos)
+        if (in_array($user->id_rol, ['00001', '00002']) && !$user->activo) {
+            return response([
+                'message' => 'Su cuenta se encuentra inactiva.',
+            ], 403);
+        }
 
         $user->tokens()->delete();
 
@@ -293,6 +292,7 @@ class AuthController extends Controller
                 $operativo = OperativoService::getOneByUser($user->id);
                 if ($operativo) {
                     $operativo->is_deleted = !$data['active'];
+                    $operativo->disponible = $data['active'];
                     $operativo->save();
                 }
                 break;
