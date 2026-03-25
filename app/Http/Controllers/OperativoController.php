@@ -91,6 +91,8 @@ class OperativoController extends Controller
         $operativo->email = $user->email;
 
         $operativo->array_especialidades = OperativoEspecialidadService::getOneByOperativo($id);
+        $operativo->tiene_asignaciones_activas = OperativoService::tieneAsignacionesActivas($id);
+        
         return $this->successResponse($operativo, 'Operativo obtenido correctamente');
     }
     public function update(Request $request, $id)
@@ -126,6 +128,13 @@ class OperativoController extends Controller
 
         $idsPorEliminar = array_diff($idsExistentes, $idsNuevos);
         $idsPorAgregar = array_diff($idsNuevos, $idsExistentes);
+
+        // Bloquear actualización explícita de especialidades si hay asignaciones
+        if (!empty($idsPorEliminar) || !empty($idsPorAgregar)) {
+            if (OperativoService::tieneAsignacionesActivas($id)) {
+                return $this->errorResponse('No se permite modificar las especialidades de un operativo con asignaciones en curso o próximas a ejecutarse.', 400);
+            }
+        }
 
         //borrar registros de operativo_especialidad de ese operativo en especifico
         foreach ($idsPorEliminar as $idPorEliminar) {
