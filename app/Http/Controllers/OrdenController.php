@@ -163,6 +163,8 @@ class OrdenController extends Controller
                     'especialidades.nombre as nombre_especialidad',
                     'especialidades.nivel',
                     'ordenes_servicios_operativos.es_jefe',
+                    'ordenes_servicios_operativos.fecha_inicio',
+                    'ordenes_servicios_operativos.fecha_fin',
                     DB::raw('(ordenes_servicios_especialidades.horas_hombre * ordenes_servicios_especialidades.tarifa_hora) as ingreso')
                 )
                 ->get();

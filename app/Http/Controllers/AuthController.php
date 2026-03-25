@@ -276,6 +276,15 @@ class AuthController extends Controller
 
         $data = $request->all();
 
+        if ($user->id_rol === '00002' && !$data['active']) {
+            $operativo = OperativoService::getOneByUser($user->id);
+            if ($operativo && OperativoService::tieneAsignacionesActivas($operativo->id_operativo)) {
+                return response([
+                    'message' => 'No se puede inactivar al operativo porque tiene asignaciones en ejecución o próximas a ejecutarse.',
+                ], 400);
+            }
+        }
+
         $user->activo = $data['active'];
         $user->save();
 

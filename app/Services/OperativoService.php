@@ -81,4 +81,14 @@ class OperativoService
         $operativo = Operativo::where('id_user', $id)->first();
         return $operativo;
     }
+
+    public static function tieneAsignacionesActivas($id_operativo)
+    {
+        return DB::table('ordenes_servicios_operativos')
+            ->join('ordenes_servicios', 'ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+            ->where('ordenes_servicios_operativos.id_operativo', $id_operativo)
+            ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
+            ->exists();
+    }
 }

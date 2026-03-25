@@ -67,6 +67,7 @@ class EquipoService
         DB::beginTransaction();
         //$equipo->delete();
         $equipo->is_deleted = true;
+        $equipo->disponible = false;
         $equipo->save();
 
         $tipo_equipo = TipoEquipo::find($equipo->id_tipo_equipo);
