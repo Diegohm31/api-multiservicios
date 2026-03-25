@@ -66,6 +66,11 @@ class EspecialidadController extends Controller
     public function destroy(string $id)
     {
         $especialidad = EspecialidadService::delete($id);
+        
+        if ($especialidad === false) {
+            return $this->errorResponse('No se puede eliminar la especialidad porque está vinculada a una orden en progreso o a un servicio tabulado.', 400);
+        }
+
         if (!$especialidad) {
             return $this->errorResponse('Especialidad no encontrada', 404);
         }

@@ -86,6 +86,10 @@ class EspecialidadService
             return null;
         }
 
+        if (!self::sePuedeEliminar($id)) {
+            return false; // Retornamos falso si falla validación
+        }
+
         DB::beginTransaction();
         //borrado logico
         $especialidad->update(['is_deleted' => true]);
@@ -93,4 +97,32 @@ class EspecialidadService
         return $especialidad;
     }
 
+    public static function sePuedeEliminar($id_especialidad)
+    {
+        // 1. Verificar si está en órdenes activas
+        $enOrdenesActivas = DB::table('ordenes_servicios_especialidades')
+            ->join('ordenes_servicios', 'ordenes_servicios_especialidades.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+            ->where('ordenes_servicios_especialidades.id_especialidad', $id_especialidad)
+            ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
+            ->exists();
+
+        if ($enOrdenesActivas) {
+            return false;
+        }
+
+        // 2. Verificar si está siendo usada por algún servicio catalogado como tabulado
+        $enServiciosTabulados = DB::table('servicios_especialidades')
+            ->join('servicios', 'servicios_especialidades.id_servicio', '=', 'servicios.id_servicio')
+            ->where('servicios_especialidades.id_especialidad', $id_especialidad)
+            ->where('servicios.servicio_tabulado', true) // true o 1, asumiendo booleano
+            ->where('servicios.is_deleted', false) // Sólo chequeamos servicios activos
+            ->exists();
+
+        if ($enServiciosTabulados) {
+            return false;
+        }
+
+        return true;
+    }
 }
