@@ -103,6 +103,8 @@ class ServicioController extends Controller
         $servicio->array_materiales = ServicioMaterialService::getOneByServicio($id);
         $servicio->array_tipos_equipos = ServicioTipoEquipoService::getOneByServicio($id);
         $servicio->array_especialidades = ServicioEspecialidadService::getOneByServicio($id);
+        
+        $servicio->tiene_asignaciones_previas = ServicioService::tieneAsignacionesPrevias($id);
 
         return $this->successResponse($servicio, 'Servicio obtenido correctamente');
     }
@@ -130,11 +132,23 @@ class ServicioController extends Controller
         if (!request()->has('id_tipo_servicio') && !request()->has('nombre') && !request()->has('descripcion') && !request()->has('unidad_medida') && !request()->has('servicio_tabulado') && !request()->has('precio_materiales') && !request()->has('precio_tipos_equipos') && !request()->has('precio_mano_obra') && !request()->has('precio_general') && !request()->has('duracion_horas') && !request()->has('is_deleted') && !request()->has('array_materiales') && !request()->has('array_tipos_equipos') && !request()->has('array_especialidades') && !request()->has('image')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
-        $data = $request->all();
-        $servicio = ServicioService::update($id, $data);
-        if (!$servicio) {
+        
+        $servicioAntiguo = ServicioService::getOne($id);
+        if (!$servicioAntiguo) {
             return $this->errorResponse('Servicio no encontrado', 404);
         }
+
+        if (
+           ($request->has('id_tipo_servicio') && $request->id_tipo_servicio != $servicioAntiguo->id_tipo_servicio) ||
+           ($request->has('nombre') && $request->nombre != $servicioAntiguo->nombre)
+        ) {
+            if (ServicioService::tieneAsignacionesPrevias($id)) {
+                return $this->errorResponse('No se puede modificar el tipo de servicio ni el nombre de un servicio que ya ha sido asignado a órdenes.', 400);
+            }
+        }
+
+        $data = $request->all();
+        $servicio = ServicioService::update($id, $data);
 
         if (!$servicio->servicio_tabulado) {
             // Si no es tabulado, eliminamos todos los registros asociados
@@ -245,6 +259,11 @@ class ServicioController extends Controller
     public function destroy(string $id)
     {
         $servicio = ServicioService::delete($id);
+        
+        if ($servicio === false) {
+            return $this->errorResponse('No se puede eliminar el servicio porque está comprometido en una orden activa.', 400);
+        }
+        
         if (!$servicio) {
             return $this->errorResponse('Servicio no encontrado', 404);
         }

@@ -104,7 +104,7 @@ class EspecialidadService
             ->join('ordenes_servicios', 'ordenes_servicios_especialidades.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
             ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
             ->where('ordenes_servicios_especialidades.id_especialidad', $id_especialidad)
-            ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
+            ->whereNotIn('ordenes.estado', ['Cancelada', 'Completada'])
             ->exists();
 
         if ($enOrdenesActivas) {

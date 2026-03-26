@@ -95,7 +95,7 @@ class TipoEquipoService
             ->join('ordenes_servicios', 'ordenes_servicios_tipos_equipos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
             ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
             ->where('ordenes_servicios_tipos_equipos.id_tipo_equipo', $id_tipo_equipo)
-            ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
+            ->whereNotIn('ordenes.estado', ['Cancelada', 'Completada'])
             ->exists();
 
         if ($enOrdenesActivas) {
@@ -119,7 +119,7 @@ class TipoEquipoService
             ->where('id_tipo_equipo', $id_tipo_equipo)
             ->where('is_deleted', false)
             ->exists();
-            
+
         if ($tieneEquipos) {
             return false;
         }

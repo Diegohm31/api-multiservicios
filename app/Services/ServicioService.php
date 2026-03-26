@@ -63,6 +63,10 @@ class ServicioService
             return null;
         }
 
+        if (!self::sePuedeEliminar($id)) {
+            return false;
+        }
+
         DB::beginTransaction();
         //borrado logico
         $servicio->update(['is_deleted' => true]);
@@ -76,4 +80,21 @@ class ServicioService
         return $servicio->servicio_tabulado;
     }
 
+    public static function tieneAsignacionesPrevias($id_servicio)
+    {
+        return DB::table('ordenes_servicios')
+            ->where('id_servicio', $id_servicio)
+            ->exists();
+    }
+
+    public static function sePuedeEliminar($id_servicio)
+    {
+        $enOrdenesActivas = DB::table('ordenes_servicios')
+            ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+            ->where('ordenes_servicios.id_servicio', $id_servicio)
+            ->whereNotIn('ordenes.estado', ['Cancelada', 'Completada'])
+            ->exists();
+
+        return !$enOrdenesActivas;
+    }
 }
