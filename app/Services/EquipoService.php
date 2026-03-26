@@ -64,6 +64,10 @@ class EquipoService
             return null;
         }
 
+        if (!self::sePuedeEliminar($id)) {
+            return false;
+        }
+
         DB::beginTransaction();
         //$equipo->delete();
         $equipo->is_deleted = true;
@@ -71,11 +75,31 @@ class EquipoService
         $equipo->save();
 
         $tipo_equipo = TipoEquipo::find($equipo->id_tipo_equipo);
-        $tipo_equipo->cantidad = $tipo_equipo->cantidad - 1;
-        $tipo_equipo->save();
+        if ($tipo_equipo) {
+            $tipo_equipo->cantidad = $tipo_equipo->cantidad - 1;
+            $tipo_equipo->save();
+        }
 
         DB::commit();
         return $equipo;
     }
 
+    public static function tieneAsignacionesPrevias($id_equipo)
+    {
+        return DB::table('ordenes_servicios_equipos')
+            ->where('id_equipo', $id_equipo)
+            ->exists();
+    }
+
+    public static function sePuedeEliminar($id_equipo)
+    {
+        $enOrdenesActivas = DB::table('ordenes_servicios_equipos')
+            ->join('ordenes_servicios', 'ordenes_servicios_equipos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+            ->where('ordenes_servicios_equipos.id_equipo', $id_equipo)
+            ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
+            ->exists();
+
+        return !$enOrdenesActivas;
+    }
 }

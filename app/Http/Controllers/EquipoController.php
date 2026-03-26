@@ -41,8 +41,13 @@ class EquipoController extends Controller
         if (!$equipo) {
             return $this->errorResponse('Equipo no encontrado', 404);
         }
+        
+        // Adjuntamos flag para que el frontend pueda bloquear modificaciones al campo de tipo_equipo
+        $equipo->tiene_asignaciones_previas = EquipoService::tieneAsignacionesPrevias($id);
+        
         return $this->successResponse($equipo, 'Equipo obtenido correctamente');
     }
+    
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -58,11 +63,21 @@ class EquipoController extends Controller
         if (!$request->has('id_tipo_equipo') && !$request->has('modelo') && !$request->has('descripcion') && !$request->has('codigo_interno') && !$request->has('disponible') && !$request->has('fecha_adquisicion')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
-        $data = $request->all();
-        $equipo = EquipoService::update($id, $data);
-        if (!$equipo) {
+        
+        $equipoAntiguo = EquipoService::getOne($id);
+        if (!$equipoAntiguo) {
             return $this->errorResponse('Equipo no encontrado', 404);
         }
+
+        // Si intenta cambiar la categoría, verificamos que no tenga historial
+        if ($request->has('id_tipo_equipo') && $request->id_tipo_equipo != $equipoAntiguo->id_tipo_equipo) {
+            if (EquipoService::tieneAsignacionesPrevias($id)) {
+                return $this->errorResponse('No se puede modificar la categoría de un equipo que ya ha sido asignado a órdenes.', 400);
+            }
+        }
+
+        $data = $request->all();
+        $equipo = EquipoService::update($id, $data);
 
         return $this->successResponse($equipo, 'Equipo actualizado correctamente');
     }
@@ -70,9 +85,15 @@ class EquipoController extends Controller
     public function destroy(string $id)
     {
         $equipo = EquipoService::delete($id);
+        
+        if ($equipo === false) {
+            return $this->errorResponse('No se puede eliminar el equipo porque está siendo utilizado en una orden en ejecución.', 400);
+        }
+        
         if (!$equipo) {
             return $this->errorResponse('Equipo no encontrado', 404);
         }
+        
         return $this->successResponse($equipo, 'Equipo eliminado correctamente');
     }
 }
