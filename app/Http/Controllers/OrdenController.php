@@ -21,6 +21,8 @@ use App\Services\MovimientoMaterialService;
 use App\Services\OrdenServicioMaterialService;
 use App\Services\OrdenServicioTipoEquipoService;
 use App\Services\OrdenServicioEspecialidadService;
+use App\Services\OrdenServicioOperativoService;
+use App\Services\OrdenServicioEquipoService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use App\Models\Orden;
@@ -425,6 +427,8 @@ class OrdenController extends Controller
             $servicio->array_materiales = OrdenServicioMaterialService::getOneByServicio($servicio->id_orden_servicio);
             $servicio->array_tipos_equipos = OrdenServicioTipoEquipoService::getOneByServicio($servicio->id_orden_servicio);
             $servicio->array_especialidades = OrdenServicioEspecialidadService::getOneByServicio($servicio->id_orden_servicio);
+            $servicio->operadores_asignados = OrdenServicioOperativoService::getOneByServicio($servicio->id_orden_servicio);
+            $servicio->equipos_asignados = OrdenServicioEquipoService::getOneByServicio($servicio->id_orden_servicio);
         }
 
         return $this->successResponse($orden, 'Orden obtenida correctamente');
@@ -450,6 +454,11 @@ class OrdenController extends Controller
 
             foreach ($servicios as $srvData) {
                 $id_orden_servicio = $srvData['id_orden_servicio'];
+
+                // Eliminar asignaciones previas antes de insertar las nuevas (soporte para Reasignación)
+                DB::table('ordenes_servicios_operativos')->where('id_orden_servicio', $id_orden_servicio)->delete();
+                DB::table('ordenes_servicios_equipos')->where('id_orden_servicio', $id_orden_servicio)->delete();
+
                 $ordenServicio = OrdenServicio::find($id_orden_servicio);
 
                 // 2. Actualizar fechas del servicio (ya calculadas en el frontend)

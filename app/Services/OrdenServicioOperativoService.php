@@ -59,4 +59,10 @@ class OrdenServicioOperativoService
         return $registro;
     }
 
+    public static function getOneByServicio($id_orden_servicio)
+    {
+        return DB::table('ordenes_servicios_operativos')
+            ->where('id_orden_servicio', $id_orden_servicio)
+            ->get();
+    }
 }
