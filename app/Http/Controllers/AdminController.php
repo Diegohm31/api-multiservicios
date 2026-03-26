@@ -23,10 +23,20 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|max:255',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/'
+            ],
             'cedula' => 'required|string|max:11|unique:admins,cedula',
             'telefono' => 'string|max:11|unique:admins,telefono',
             'cargo' => 'required|string|max:100',
+        ], [
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.regex' => 'La contraseña debe contener al menos una mayúscula, una minúscula y un número.'
         ]);
 
         $data = $request->all();
