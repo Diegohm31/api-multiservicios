@@ -151,7 +151,7 @@ class OrdenController extends Controller
             $servicio->operativos_asignados = DB::table('ordenes_servicios_operativos')
                 ->join('operativos', 'ordenes_servicios_operativos.id_operativo', '=', 'operativos.id_operativo')
                 ->join('especialidades', 'ordenes_servicios_operativos.id_especialidad', '=', 'especialidades.id_especialidad')
-                ->join('ordenes_servicios_especialidades', function ($join) {
+                ->leftJoin('ordenes_servicios_especialidades', function ($join) {
                     $join->on('ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios_especialidades.id_orden_servicio')
                         ->on('ordenes_servicios_operativos.id_especialidad', '=', 'ordenes_servicios_especialidades.id_especialidad');
                 })
@@ -165,7 +165,33 @@ class OrdenController extends Controller
                     'ordenes_servicios_operativos.es_jefe',
                     'ordenes_servicios_operativos.fecha_inicio',
                     'ordenes_servicios_operativos.fecha_fin',
-                    DB::raw('(ordenes_servicios_especialidades.horas_hombre * ordenes_servicios_especialidades.tarifa_hora) as ingreso')
+                    DB::raw('COALESCE(ordenes_servicios_especialidades.horas_hombre * ordenes_servicios_especialidades.tarifa_hora, 0) as ingreso')
+                )
+                ->get();
+
+            // Cargar equipos
+            $servicio->equipos_asignados = DB::table('ordenes_servicios_equipos')
+                ->join('equipos', 'ordenes_servicios_equipos.id_equipo', '=', 'equipos.id_equipo')
+                ->join('tipos_equipos', 'equipos.id_tipo_equipo', '=', 'tipos_equipos.id_tipo_equipo')
+                ->where('ordenes_servicios_equipos.id_orden_servicio', $servicio->id_orden_servicio)
+                ->select(
+                    'equipos.id_equipo',
+                    'tipos_equipos.nombre as nombre_equipo',
+                    'equipos.modelo',
+                    'ordenes_servicios_equipos.fecha_inicio',
+                    'ordenes_servicios_equipos.fecha_fin'
+                )
+                ->get();
+
+            // Cargar materiales
+            $servicio->materiales_asignados = DB::table('ordenes_servicios_materiales')
+                ->join('materiales', 'ordenes_servicios_materiales.id_material', '=', 'materiales.id_material')
+                ->where('ordenes_servicios_materiales.id_orden_servicio', $servicio->id_orden_servicio)
+                ->select(
+                    'materiales.id_material',
+                    'materiales.nombre as nombre_material',
+                    'ordenes_servicios_materiales.cantidad as cantidad_usada',
+                    'ordenes_servicios_materiales.precio_unitario'
                 )
                 ->get();
         }
