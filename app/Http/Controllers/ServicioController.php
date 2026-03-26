@@ -40,8 +40,8 @@ class ServicioController extends Controller
             'precio_general' => 'nullable|numeric',
             'duracion_horas' => 'nullable|numeric',
             'array_materiales' => 'nullable|array',
-            'array_tipos_equipos' => 'nullable|array',
-            'array_especialidades' => 'nullable|array',
+            'array_tipos_equipos' => 'required_if:servicio_tabulado,1|array|min:1',
+            'array_especialidades' => 'required_if:servicio_tabulado,1|array|min:1',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
@@ -103,7 +103,7 @@ class ServicioController extends Controller
         $servicio->array_materiales = ServicioMaterialService::getOneByServicio($id);
         $servicio->array_tipos_equipos = ServicioTipoEquipoService::getOneByServicio($id);
         $servicio->array_especialidades = ServicioEspecialidadService::getOneByServicio($id);
-        
+
         $servicio->tiene_asignaciones_previas = ServicioService::tieneAsignacionesPrevias($id);
 
         return $this->successResponse($servicio, 'Servicio obtenido correctamente');
@@ -123,8 +123,8 @@ class ServicioController extends Controller
             'duracion_horas' => 'nullable|numeric',
             'is_deleted' => 'boolean',
             'array_materiales' => 'nullable|array',
-            'array_tipos_equipos' => 'nullable|array',
-            'array_especialidades' => 'nullable|array',
+            'array_tipos_equipos' => 'required_if:servicio_tabulado,1|array|min:1',
+            'array_especialidades' => 'required_if:servicio_tabulado,1|array|min:1',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
         ]);
 
@@ -132,15 +132,15 @@ class ServicioController extends Controller
         if (!request()->has('id_tipo_servicio') && !request()->has('nombre') && !request()->has('descripcion') && !request()->has('unidad_medida') && !request()->has('servicio_tabulado') && !request()->has('precio_materiales') && !request()->has('precio_tipos_equipos') && !request()->has('precio_mano_obra') && !request()->has('precio_general') && !request()->has('duracion_horas') && !request()->has('is_deleted') && !request()->has('array_materiales') && !request()->has('array_tipos_equipos') && !request()->has('array_especialidades') && !request()->has('image')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
-        
+
         $servicioAntiguo = ServicioService::getOne($id);
         if (!$servicioAntiguo) {
             return $this->errorResponse('Servicio no encontrado', 404);
         }
 
         if (
-           ($request->has('id_tipo_servicio') && $request->id_tipo_servicio != $servicioAntiguo->id_tipo_servicio) ||
-           ($request->has('nombre') && $request->nombre != $servicioAntiguo->nombre)
+        ($request->has('id_tipo_servicio') && $request->id_tipo_servicio != $servicioAntiguo->id_tipo_servicio) ||
+        ($request->has('nombre') && $request->nombre != $servicioAntiguo->nombre)
         ) {
             if (ServicioService::tieneAsignacionesPrevias($id)) {
                 return $this->errorResponse('No se puede modificar el tipo de servicio ni el nombre de un servicio que ya ha sido asignado a órdenes.', 400);
@@ -155,7 +155,8 @@ class ServicioController extends Controller
             ServicioMaterialService::deleteByServicio($id);
             ServicioTipoEquipoService::deleteByServicio($id);
             ServicioEspecialidadService::deleteByServicio($id);
-        } else {
+        }
+        else {
             // Si es tabulado, sincronizamos los arreglos recibidos
 
             // --- MATERIALES ---
@@ -180,7 +181,8 @@ class ServicioController extends Controller
                         // Actualizar si existe
                         ServicioMaterialService::updateByServicioAndMaterial($id, $id_item, $item);
                         $dictExistentes->forget($id_item);
-                    } else {
+                    }
+                    else {
                         // Crear si es nuevo
                         $itemData = [
                             'id_servicio' => $id,
@@ -208,7 +210,8 @@ class ServicioController extends Controller
                         // Actualizar
                         ServicioTipoEquipoService::updateByServicioAndTipoEquipo($id, $id_item, $item);
                         $dictExistentes->forget($id_item);
-                    } else {
+                    }
+                    else {
                         // Crear
                         $itemData = [
                             'id_servicio' => $id,
@@ -236,7 +239,8 @@ class ServicioController extends Controller
                         // Actualizar
                         ServicioEspecialidadService::updateByServicioAndEspecialidad($id, $id_item, $item);
                         $dictExistentes->forget($id_item);
-                    } else {
+                    }
+                    else {
                         // Crear
                         $itemData = [
                             'id_servicio' => $id,
@@ -259,11 +263,11 @@ class ServicioController extends Controller
     public function destroy(string $id)
     {
         $servicio = ServicioService::delete($id);
-        
+
         if ($servicio === false) {
             return $this->errorResponse('No se puede eliminar el servicio porque está comprometido en una orden activa.', 400);
         }
-        
+
         if (!$servicio) {
             return $this->errorResponse('Servicio no encontrado', 404);
         }
