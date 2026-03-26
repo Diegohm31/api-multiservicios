@@ -64,6 +64,11 @@ class TipoEquipoController extends Controller
     public function destroy(string $id)
     {
         $tipo_equipo = TipoEquipoService::delete($id);
+
+        if ($tipo_equipo === false) {
+            return $this->errorResponse('No se puede eliminar el tipo de equipo porque tiene equipos asociados, está vinculado a una orden en progreso o a un servicio tabulado.', 400);
+        }
+
         if (!$tipo_equipo) {
             return $this->errorResponse('Tipo de equipo no encontrado', 404);
         }

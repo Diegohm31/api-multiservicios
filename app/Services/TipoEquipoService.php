@@ -78,10 +78,52 @@ class TipoEquipoService
             return null;
         }
 
+        if (!self::sePuedeEliminar($id)) {
+            return false;
+        }
+
         DB::beginTransaction();
         $tipo_equipo->delete();
         DB::commit();
         return $tipo_equipo;
     }
 
+    public static function sePuedeEliminar($id_tipo_equipo)
+    {
+        // 1. Verificar si está en órdenes activas
+        $enOrdenesActivas = DB::table('ordenes_servicios_tipos_equipos')
+            ->join('ordenes_servicios', 'ordenes_servicios_tipos_equipos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+            ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+            ->where('ordenes_servicios_tipos_equipos.id_tipo_equipo', $id_tipo_equipo)
+            ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
+            ->exists();
+
+        if ($enOrdenesActivas) {
+            return false;
+        }
+
+        // 2. Verificar si está siendo usada por algún servicio catalogado como tabulado
+        $enServiciosTabulados = DB::table('servicios_tipos_equipos')
+            ->join('servicios', 'servicios_tipos_equipos.id_servicio', '=', 'servicios.id_servicio')
+            ->where('servicios_tipos_equipos.id_tipo_equipo', $id_tipo_equipo)
+            ->where('servicios.servicio_tabulado', true)
+            ->where('servicios.is_deleted', false)
+            ->exists();
+
+        if ($enServiciosTabulados) {
+            return false;
+        }
+
+        // 3. Verificar si tiene equipos asociados que no estén borrados lógicamente
+        $tieneEquipos = DB::table('equipos')
+            ->where('id_tipo_equipo', $id_tipo_equipo)
+            ->where('is_deleted', false)
+            ->exists();
+            
+        if ($tieneEquipos) {
+            return false;
+        }
+
+        return true;
+    }
 }
