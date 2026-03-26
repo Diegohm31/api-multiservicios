@@ -585,6 +585,41 @@ class OrdenController extends Controller
             $orden->save();
 
             DB::commit();
+
+            // 5. Notificar a los operativos asignados
+            try {
+                $operativos = DB::table('ordenes_servicios_operativos')
+                    ->join('ordenes_servicios', 'ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+                    ->join('operativos', 'ordenes_servicios_operativos.id_operativo', '=', 'operativos.id_operativo')
+                    ->join('users', 'operativos.id_user', '=', 'users.id')
+                    ->where('ordenes_servicios.id_orden', $id)
+                    ->select('users.id', 'users.name', 'users.email')
+                    ->distinct()
+                    ->get();
+
+                foreach ($operativos as $opUser) {
+                    MailerService::enviarCorreo(
+                        ['to' => [$opUser->email]],
+                        "Orden #{$orden->id_orden} en ejecución",
+                        'emails.orden_en_ejecucion',
+                        [
+                            'nombre' => $opUser->name,
+                            'id_orden' => $orden->id_orden,
+                            'fecha_inicio_real' => $orden->fecha_inicio_real->format('d/m/Y H:i')
+                        ]
+                    );
+
+                    NotificacionService::store([
+                        'id_user' => $opUser->id,
+                        'asunto' => "La orden #{$orden->id_orden} ha sido puesta en ejecución",
+                        'fecha_envio' => now()
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Si falla la notificación, no queremos que la orden falle, solo loguearlo si es necesario
+                // \Illuminate\Support\Facades\Log::error('Error notificando a operativos: ' . $e->getMessage());
+            }
+
             return $this->successResponse($orden, 'Orden puesta en ejecución correctamente. Inventario actualizado y notificaciones enviadas si corresponde.');
         } catch (\Exception $e) {
             DB::rollback();
