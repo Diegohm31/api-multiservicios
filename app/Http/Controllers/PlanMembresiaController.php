@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\PlanMembresiaService;
 use App\Services\PlanMembresiaTipoServicioService;
+use App\Models\Membresia;
 use Illuminate\Support\Facades\DB;
 
 class PlanMembresiaController extends Controller
@@ -55,7 +56,8 @@ class PlanMembresiaController extends Controller
 
             DB::commit();
             return $this->successResponse($plan_membresia, 'Plan de membresia creado correctamente');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             return $this->errorResponse('Error al crear el plan: ' . $e->getMessage(), 500);
         }
@@ -88,6 +90,14 @@ class PlanMembresiaController extends Controller
         // validar que al menos un campo sea modificado
         if (!$request->has('nombre') && !$request->has('descripcion') && !$request->has('duracion_meses') && !$request->has('precio') && !$request->has('array_tipos_servicios') && !$request->has('image') && !$request->has('imagePath')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
+        }
+
+        $membresiasActivas = Membresia::where('id_plan_membresia', $id)
+            ->where('estado', 'Activa')
+            ->exists();
+
+        if ($membresiasActivas) {
+            return $this->errorResponse('No se puede editar este plan de membresía porque hay clientes que lo tienen activo actualmente', 400);
         }
 
         DB::beginTransaction();
@@ -124,7 +134,8 @@ class PlanMembresiaController extends Controller
                         PlanMembresiaTipoServicioService::update($registro->id_plan_membresia_tipo_servicio, [
                             'porcentaje_descuento' => $porcentaje
                         ]);
-                    } else {
+                    }
+                    else {
                         // Crear nuevo
                         PlanMembresiaTipoServicioService::store([
                             'id_plan_membresia' => $id,
@@ -137,7 +148,8 @@ class PlanMembresiaController extends Controller
 
             DB::commit();
             return $this->successResponse($plan_membresia, 'Plan de membresia actualizado correctamente');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             return $this->errorResponse('Error al actualizar el plan: ' . $e->getMessage(), 500);
         }
@@ -145,6 +157,14 @@ class PlanMembresiaController extends Controller
 
     public function destroy(string $id)
     {
+        $membresiasActivas = Membresia::where('id_plan_membresia', $id)
+            ->where('estado', 'Activa')
+            ->exists();
+
+        if ($membresiasActivas) {
+            return $this->errorResponse('No se puede eliminar este plan de membresía porque hay clientes que lo tienen activo actualmente', 400);
+        }
+
         $plan_membresia = PlanMembresiaService::delete($id);
         if (!$plan_membresia) {
             return $this->errorResponse('Plan de membresia no encontrado', 404);
