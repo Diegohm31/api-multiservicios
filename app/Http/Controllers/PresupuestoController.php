@@ -43,6 +43,10 @@ class PresupuestoController extends Controller
             'iva' => 'required|numeric',
             'total_a_pagar' => 'required|numeric',
             'array_servicios' => 'required|array',
+            'array_servicios.*.array_especialidades' => 'required|array|min:1',
+        ], [
+            'array_servicios.*.array_especialidades.required' => 'Cada servicio debe tener al menos una especialidad (Mano de Obra) asignada.',
+            'array_servicios.*.array_especialidades.min' => 'Cada servicio debe tener al menos una especialidad (Mano de Obra) asignada.',
         ]);
 
         $data = $request->all();
