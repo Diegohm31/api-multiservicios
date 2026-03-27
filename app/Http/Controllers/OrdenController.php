@@ -450,6 +450,9 @@ class OrdenController extends Controller
             $orden->estado = 'En espera';
             $orden->fecha_inicio = $payload['fecha_inicio'] ?? $orden->fecha_inicio;
             $orden->fecha_fin = $payload['fecha_fin'] ?? $orden->fecha_fin;
+            if (isset($payload['findes_laborables'])) {
+                $orden->findes_laborables = $payload['findes_laborables'];
+            }
             $orden->save();
 
             foreach ($servicios as $srvData) {

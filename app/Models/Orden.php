@@ -41,6 +41,6 @@ class Orden extends ApiModel
         'observaciones',
         'calificacion',
         'pdf_peritaje',
+        'findes_laborables'
     ];
 }
-

@@ -19,9 +19,9 @@ class OrdenService
         $ordenes = DB::table('ordenes')
             ->join('clientes', 'ordenes.id_cliente', '=', 'clientes.id_cliente')
             ->leftJoin('membresias', function ($join) {
-                $join->on('clientes.id_cliente', '=', 'membresias.id_cliente')
-                    ->where('membresias.estado', '=', 'Activa');
-            })
+            $join->on('clientes.id_cliente', '=', 'membresias.id_cliente')
+                ->where('membresias.estado', '=', 'Activa');
+        })
             ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
             ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula', 'planes_membresias.imagePath as plan_image_path', 'planes_membresias.nombre as active_plan_nombre')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
@@ -39,6 +39,7 @@ class OrdenService
     public static function store($data)
     {
         DB::beginTransaction();
+        $data['findes_laborables'] = true;
         $orden = Orden::create($data);
 
         DB::commit();
@@ -99,10 +100,10 @@ class OrdenService
         // Subconsulta para calcular el ingreso acumulado del operativo en la orden
         $ingresoSub = DB::table('ordenes_servicios')
             ->join('ordenes_servicios_operativos', 'ordenes_servicios.id_orden_servicio', '=', 'ordenes_servicios_operativos.id_orden_servicio')
-            ->join('ordenes_servicios_especialidades', function($join) {
-                $join->on('ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios_especialidades.id_orden_servicio')
-                     ->on('ordenes_servicios_operativos.id_especialidad', '=', 'ordenes_servicios_especialidades.id_especialidad');
-            })
+            ->join('ordenes_servicios_especialidades', function ($join) {
+            $join->on('ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios_especialidades.id_orden_servicio')
+                ->on('ordenes_servicios_operativos.id_especialidad', '=', 'ordenes_servicios_especialidades.id_especialidad');
+        })
             ->whereColumn('ordenes_servicios.id_orden', 'ordenes.id_orden')
             ->where('ordenes_servicios_operativos.id_operativo', $id_operativo)
             ->selectRaw('COALESCE(SUM(ordenes_servicios_especialidades.horas_hombre * ordenes_servicios_especialidades.tarifa_hora), 0)');
@@ -110,9 +111,9 @@ class OrdenService
         $ordenes = DB::table('ordenes')
             ->join('clientes', 'ordenes.id_cliente', '=', 'clientes.id_cliente')
             ->leftJoin('membresias', function ($join) {
-                $join->on('clientes.id_cliente', '=', 'membresias.id_cliente')
-                    ->where('membresias.estado', '=', 'Activa');
-            })
+            $join->on('clientes.id_cliente', '=', 'membresias.id_cliente')
+                ->where('membresias.estado', '=', 'Activa');
+        })
             ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
             ->join('ordenes_servicios', 'ordenes.id_orden', '=', 'ordenes_servicios.id_orden')
             ->join('ordenes_servicios_operativos', 'ordenes_servicios.id_orden_servicio', '=', 'ordenes_servicios_operativos.id_orden_servicio')
@@ -133,39 +134,51 @@ class OrdenService
     public static function reprogramarSegunEjecucion($id_orden)
     {
         $orden = Orden::find($id_orden);
-        if (!$orden || !$orden->fecha_inicio) return null;
+        if (!$orden || !$orden->fecha_inicio)
+            return null;
 
         $now = now();
         $fechaInicioOriginal = \Carbon\Carbon::parse($orden->fecha_inicio);
-        
-        // 1. Diferencia inicial en días (manteniendo horas exactas)
-        $diffDays = $fechaInicioOriginal->diffInDays($now, false);
-        
-        // Ajuste: si diffInDays truncó, comparar fechas puras
+        $isWorkingDaysOnly = !$orden->findes_laborables;
+
         $today = $now->copy()->startOfDay();
         $originalDay = $fechaInicioOriginal->copy()->startOfDay();
-        $daysToAdd = $originalDay->diffInDays($today, false);
 
-        // 2. Ajuste Fino: Si la nueva fecha de inicio (hoy + hora original) es anterior a "ahora mismo", sumar 1 día más.
-        $nuevaFechaInicio = $fechaInicioOriginal->copy()->addDays($daysToAdd);
+        $daysToAdd = $isWorkingDaysOnly ? $originalDay->diffInWeekdays($today, false) : $originalDay->diffInDays($today, false);
+
+        $nuevaFechaInicio = $fechaInicioOriginal->copy();
+        if ($isWorkingDaysOnly) {
+            $nuevaFechaInicio->addWeekdays($daysToAdd);
+        } else {
+            $nuevaFechaInicio->addDays($daysToAdd);
+        }
+
+        // 2. Ajuste Fino: Si la nueva fecha de inicio (hoy + hora original) es anterior a "ahora mismo", sumar 1 día más (hábil o calendario).
         if ($nuevaFechaInicio->lt($now)) {
             $daysToAdd += 1;
         }
 
-        if ($daysToAdd == 0) return $orden; // No hay desfase
+        if ($daysToAdd == 0)
+            return $orden; // No hay desfase
+
+        $addFn = function ($fecha) use ($daysToAdd, $isWorkingDaysOnly) {
+            if (!$fecha) return null;
+            $d = \Carbon\Carbon::parse($fecha);
+            return $isWorkingDaysOnly ? $d->addWeekdays($daysToAdd) : $d->addDays($daysToAdd);
+        };
 
         DB::beginTransaction();
         try {
             // Actualizar Orden
-            $orden->fecha_inicio = \Carbon\Carbon::parse($orden->fecha_inicio)->addDays($daysToAdd);
-            $orden->fecha_fin = $orden->fecha_fin ? \Carbon\Carbon::parse($orden->fecha_fin)->addDays($daysToAdd) : null;
+            $orden->fecha_inicio = $addFn($orden->fecha_inicio);
+            $orden->fecha_fin = $addFn($orden->fecha_fin);
             $orden->save();
 
             // Actualizar Servicios
-            DB::table('ordenes_servicios')->where('id_orden', $id_orden)->get()->each(function($os) use ($daysToAdd) {
+            DB::table('ordenes_servicios')->where('id_orden', $id_orden)->get()->each(function ($os) use ($addFn) {
                 DB::table('ordenes_servicios')->where('id_orden_servicio', $os->id_orden_servicio)->update([
-                    'fecha_inicio' => $os->fecha_inicio ? \Carbon\Carbon::parse($os->fecha_inicio)->addDays($daysToAdd) : null,
-                    'fecha_fin' => $os->fecha_fin ? \Carbon\Carbon::parse($os->fecha_fin)->addDays($daysToAdd) : null
+                    'fecha_inicio' => $addFn($os->fecha_inicio),
+                    'fecha_fin' => $addFn($os->fecha_fin)
                 ]);
             });
 
@@ -175,14 +188,14 @@ class OrdenService
                 ->where('ordenes_servicios.id_orden', $id_orden)
                 ->select('ordenes_servicios_operativos.id_orden_servicio_operativo', 'ordenes_servicios_operativos.fecha_inicio', 'ordenes_servicios_operativos.fecha_fin')
                 ->get()
-                ->each(function($oso) use ($daysToAdd) {
-                    DB::table('ordenes_servicios_operativos')
-                        ->where('id_orden_servicio_operativo', $oso->id_orden_servicio_operativo)
-                        ->update([
-                            'fecha_inicio' => $oso->fecha_inicio ? \Carbon\Carbon::parse($oso->fecha_inicio)->addDays($daysToAdd) : null,
-                            'fecha_fin' => $oso->fecha_fin ? \Carbon\Carbon::parse($oso->fecha_fin)->addDays($daysToAdd) : null
-                        ]);
-                });
+                ->each(function ($oso) use ($addFn) {
+                DB::table('ordenes_servicios_operativos')
+                    ->where('id_orden_servicio_operativo', $oso->id_orden_servicio_operativo)
+                    ->update([
+                    'fecha_inicio' => $addFn($oso->fecha_inicio),
+                    'fecha_fin' => $addFn($oso->fecha_fin)
+                ]);
+            });
 
             // Actualizar Equipos asignados
             DB::table('ordenes_servicios_equipos')
@@ -190,18 +203,19 @@ class OrdenService
                 ->where('ordenes_servicios.id_orden', $id_orden)
                 ->select('ordenes_servicios_equipos.id_orden_servicio_equipo', 'ordenes_servicios_equipos.fecha_inicio', 'ordenes_servicios_equipos.fecha_fin')
                 ->get()
-                ->each(function($ose) use ($daysToAdd) {
-                    DB::table('ordenes_servicios_equipos')
-                        ->where('id_orden_servicio_equipo', $ose->id_orden_servicio_equipo)
-                        ->update([
-                            'fecha_inicio' => $ose->fecha_inicio ? \Carbon\Carbon::parse($ose->fecha_inicio)->addDays($daysToAdd) : null,
-                            'fecha_fin' => $ose->fecha_fin ? \Carbon\Carbon::parse($ose->fecha_fin)->addDays($daysToAdd) : null
-                        ]);
-                });
+                ->each(function ($ose) use ($addFn) {
+                DB::table('ordenes_servicios_equipos')
+                    ->where('id_orden_servicio_equipo', $ose->id_orden_servicio_equipo)
+                    ->update([
+                    'fecha_inicio' => $addFn($ose->fecha_inicio),
+                    'fecha_fin' => $addFn($ose->fecha_fin)
+                ]);
+            });
 
             DB::commit();
             return $orden;
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollback();
             throw $e;
         }
@@ -219,11 +233,11 @@ class OrdenService
 
         // 1. Obtener todas las asignaciones de la orden
         $serviciosIds = DB::table('ordenes_servicios')->where('id_orden', $id_orden)->pluck('id_orden_servicio');
-        
+
         $opAsignados = DB::table('ordenes_servicios_operativos')
             ->whereIn('id_orden_servicio', $serviciosIds)
             ->get();
-            
+
         $eqAsignados = DB::table('ordenes_servicios_equipos')
             ->whereIn('id_orden_servicio', $serviciosIds)
             ->get();
@@ -238,9 +252,9 @@ class OrdenService
                 ->where('ordenes_servicios_operativos.id_orden_servicio_operativo', '!=', $asignacion->id_orden_servicio_operativo)
                 ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
                 ->where(function ($query) use ($asignacion) {
-                    $query->where('ordenes_servicios_operativos.fecha_inicio', '<', $asignacion->fecha_fin)
-                          ->where('ordenes_servicios_operativos.fecha_fin', '>', $asignacion->fecha_inicio);
-                })
+                $query->where('ordenes_servicios_operativos.fecha_inicio', '<', $asignacion->fecha_fin)
+                    ->where('ordenes_servicios_operativos.fecha_fin', '>', $asignacion->fecha_inicio);
+            })
                 ->select('ordenes.id_orden', 'operativos.nombre as operativo_nombre', 'ordenes_servicios_operativos.fecha_inicio', 'ordenes_servicios_operativos.fecha_fin')
                 ->get();
 
@@ -265,9 +279,9 @@ class OrdenService
                 ->where('ordenes_servicios_equipos.id_orden_servicio_equipo', '!=', $asignacion->id_orden_servicio_equipo)
                 ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
                 ->where(function ($query) use ($asignacion) {
-                    $query->where('ordenes_servicios_equipos.fecha_inicio', '<', $asignacion->fecha_fin)
-                          ->where('ordenes_servicios_equipos.fecha_fin', '>', $asignacion->fecha_inicio);
-                })
+                $query->where('ordenes_servicios_equipos.fecha_inicio', '<', $asignacion->fecha_fin)
+                    ->where('ordenes_servicios_equipos.fecha_fin', '>', $asignacion->fecha_inicio);
+            })
                 ->select('ordenes.id_orden', 'tipos_equipos.nombre as equipo_nombre', 'equipos.modelo', 'ordenes_servicios_equipos.fecha_inicio', 'ordenes_servicios_equipos.fecha_fin')
                 ->get();
 
