@@ -11,7 +11,7 @@
         <h2 style="color: #007bff; text-align: center;">¡Orden en Ejecución!</h2>
         <p>Hola, {{ $nombre }}</p>
         <p>Te informamos que la orden #{{ $id_orden }} ha sido puesta en ejecución.</p>
-        <p><b>Fecha de inicio real:</b> {{ $fecha_inicio_real }}</p>
+        <p><b>Fecha de inicio:</b> {{ $fecha_inicio }}</p>
         <p style="margin-top: 30px; font-size: 14px; color: #666;">Por favor, procede con las tareas asignadas en los tiempos establecidos. ¡Mucho éxito!</p>
     </div>
 </body>

@@ -40,12 +40,14 @@ class OrdenController extends Controller
 
         if ($user->id_rol === '00003') {
             $ordenes = OrdenService::getAll();
-        } elseif ($user->id_rol === '00001') {
+        }
+        elseif ($user->id_rol === '00001') {
             $cliente = Cliente::where('id_user', $user->id)->first();
             if ($cliente) {
                 $ordenes = OrdenService::getOrdenesByCliente($cliente->id_cliente);
             }
-        } elseif ($user->id_rol === '00002') {
+        }
+        elseif ($user->id_rol === '00002') {
             $operativo = Operativo::where('id_user', $user->id)->first();
             if ($operativo) {
                 $ordenes = OrdenService::getOrdenesByOperativo($operativo->id_operativo);
@@ -53,10 +55,10 @@ class OrdenController extends Controller
         }
 
         return $this->successResponse(
-            [
-                'id_rol' => $user->id_rol,
-                'ordenes' => $ordenes
-            ],
+        [
+            'id_rol' => $user->id_rol,
+            'ordenes' => $ordenes
+        ],
             $ordenes->isEmpty() ? 'No se encontraron ordenes' : 'Ordenes obtenidas correctamente'
         );
     }
@@ -152,21 +154,21 @@ class OrdenController extends Controller
                 ->join('operativos', 'ordenes_servicios_operativos.id_operativo', '=', 'operativos.id_operativo')
                 ->join('especialidades', 'ordenes_servicios_operativos.id_especialidad', '=', 'especialidades.id_especialidad')
                 ->leftJoin('ordenes_servicios_especialidades', function ($join) {
-                    $join->on('ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios_especialidades.id_orden_servicio')
-                        ->on('ordenes_servicios_operativos.id_especialidad', '=', 'ordenes_servicios_especialidades.id_especialidad');
-                })
+                $join->on('ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios_especialidades.id_orden_servicio')
+                    ->on('ordenes_servicios_operativos.id_especialidad', '=', 'ordenes_servicios_especialidades.id_especialidad');
+            })
                 ->where('ordenes_servicios_operativos.id_orden_servicio', $servicio->id_orden_servicio)
                 ->select(
-                    'operativos.id_operativo',
-                    'operativos.id_user',
-                    'operativos.nombre as nombre_operativo',
-                    'especialidades.nombre as nombre_especialidad',
-                    'especialidades.nivel',
-                    'ordenes_servicios_operativos.es_jefe',
-                    'ordenes_servicios_operativos.fecha_inicio',
-                    'ordenes_servicios_operativos.fecha_fin',
-                    DB::raw('COALESCE(ordenes_servicios_especialidades.horas_hombre * ordenes_servicios_especialidades.tarifa_hora, 0) as ingreso')
-                )
+                'operativos.id_operativo',
+                'operativos.id_user',
+                'operativos.nombre as nombre_operativo',
+                'especialidades.nombre as nombre_especialidad',
+                'especialidades.nivel',
+                'ordenes_servicios_operativos.es_jefe',
+                'ordenes_servicios_operativos.fecha_inicio',
+                'ordenes_servicios_operativos.fecha_fin',
+                DB::raw('COALESCE(ordenes_servicios_especialidades.horas_hombre * ordenes_servicios_especialidades.tarifa_hora, 0) as ingreso')
+            )
                 ->get();
 
             // Cargar equipos
@@ -175,12 +177,12 @@ class OrdenController extends Controller
                 ->join('tipos_equipos', 'equipos.id_tipo_equipo', '=', 'tipos_equipos.id_tipo_equipo')
                 ->where('ordenes_servicios_equipos.id_orden_servicio', $servicio->id_orden_servicio)
                 ->select(
-                    'equipos.id_equipo',
-                    'tipos_equipos.nombre as nombre_equipo',
-                    'equipos.modelo',
-                    'ordenes_servicios_equipos.fecha_inicio',
-                    'ordenes_servicios_equipos.fecha_fin'
-                )
+                'equipos.id_equipo',
+                'tipos_equipos.nombre as nombre_equipo',
+                'equipos.modelo',
+                'ordenes_servicios_equipos.fecha_inicio',
+                'ordenes_servicios_equipos.fecha_fin'
+            )
                 ->get();
 
             // Cargar materiales
@@ -188,19 +190,19 @@ class OrdenController extends Controller
                 ->join('materiales', 'ordenes_servicios_materiales.id_material', '=', 'materiales.id_material')
                 ->where('ordenes_servicios_materiales.id_orden_servicio', $servicio->id_orden_servicio)
                 ->select(
-                    'materiales.id_material',
-                    'materiales.nombre as nombre_material',
-                    'ordenes_servicios_materiales.cantidad as cantidad_usada',
-                    'ordenes_servicios_materiales.precio_unitario'
-                )
+                'materiales.id_material',
+                'materiales.nombre as nombre_material',
+                'ordenes_servicios_materiales.cantidad as cantidad_usada',
+                'ordenes_servicios_materiales.precio_unitario'
+            )
                 ->get();
         }
 
         return $this->successResponse(
-            [
-                'id_rol' => $user->id_rol,
-                'orden' => $orden
-            ],
+        [
+            'id_rol' => $user->id_rol,
+            'orden' => $orden
+        ],
             'Orden obtenida correctamente'
         );
     }
@@ -241,8 +243,8 @@ class OrdenController extends Controller
                     ->join('operativos', 'ordenes_servicios_operativos.id_operativo', '=', 'operativos.id_operativo')
                     ->where('ordenes_servicios_operativos.id_orden_servicio', $servicio->id_orden_servicio)
                     ->select(
-                        'operativos.id_operativo'
-                    )
+                    'operativos.id_operativo'
+                )
                     ->get();
 
                 foreach ($servicio->operativos_asignados as $operativoAux) {
@@ -501,7 +503,8 @@ class OrdenController extends Controller
             }
 
             return $this->successResponse($orden, 'Asignación guardada con éxito.');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollback();
             return $this->errorResponse('Error: ' . $e->getMessage(), 500);
         }
@@ -511,6 +514,7 @@ class OrdenController extends Controller
         $user = $request->user();
         $admin = DB::table('admins')->where('id_user', $user->id)->first();
         $id_admin = $admin ? $admin->id_admin : null;
+        $confirmConflicts = $request->has('confirm_conflicts') && $request->confirm_conflicts == true;
 
         DB::beginTransaction();
         try {
@@ -523,7 +527,23 @@ class OrdenController extends Controller
                 return $this->errorResponse('La orden no está en espera para ser ejecutada', 400);
             }
 
-            // 1. Obtener materiales y validar stock antes de cualquier cambio
+            // 1. REPROGRAMACIÓN AUTOMÁTICA
+            // El sistema empuja todo el calendario para que coincida con el momento real de inicio.
+            $orden = OrdenService::reprogramarSegunEjecucion($id);
+
+            // 2. DETECCIÓN DE CONFLICTOS (Traslapes)
+            $conflictos = OrdenService::detectarConflictos($id);
+
+            // Si hay conflictos y el administrador no ha confirmado explícitamente, devolvemos advertencia.
+            if ((!empty($conflictos['operativos']) || !empty($conflictos['equipos'])) && !$confirmConflicts) {
+                DB::rollback();
+                return $this->successResponse([
+                    'requiere_confirmacion' => true,
+                    'conflictos' => $conflictos
+                ], 'Se detectaron conflictos de agenda para esta reprogramación automática.');
+            }
+
+            // 3. Obtener materiales y validar stock
             $idServicios = DB::table('ordenes_servicios')
                 ->where('id_orden', $id)
                 ->pluck('id_orden_servicio');
@@ -542,11 +562,10 @@ class OrdenController extends Controller
                 }
             }
 
-            // 2. Descontar materiales y registrar movimientos
+            // 4. Descontar materiales y registrar movimientos
             $materialesBajoStock = [];
 
             foreach ($materialesAsignados as $ma) {
-                // El store ya no manda correos individuales, devuelve la alerta si existe
                 $resultado = MovimientoMaterialService::store([
                     'id_material' => $ma->id_material,
                     'id_admin' => $id_admin,
@@ -559,7 +578,6 @@ class OrdenController extends Controller
                     throw new \Exception("Error al registrar movimiento para el material ID: {$ma->id_material}");
                 }
 
-                // Capturar alerta si el stock cayó por debajo del mínimo
                 if ($resultado->alerta) {
                     if (!isset($materialesBajoStock[$resultado->alerta->id_material])) {
                         $materialesBajoStock[$resultado->alerta->id_material] = [
@@ -567,26 +585,24 @@ class OrdenController extends Controller
                             'stock_actual' => $resultado->alerta->stock_actual,
                             'stock_minimo' => $resultado->alerta->stock_minimo,
                         ];
-                    } else {
-                        // Actualizar stock por si se usó el mismo material en otro servicio de la misma orden
+                    }
+                    else {
                         $materialesBajoStock[$resultado->alerta->id_material]['stock_actual'] = $resultado->alerta->stock_actual;
                     }
                 }
             }
 
-            // 3. Enviar un único correo consolidado a cada administrador si hay materiales bajo stock
             if (!empty($materialesBajoStock)) {
                 MovimientoMaterialService::notificarVariosStockBajo(array_values($materialesBajoStock));
             }
 
-            // 4. Actualizar estado y fecha real de inicio
+            // 5. Actualizar estado
             $orden->estado = 'En ejecucion';
-            $orden->fecha_inicio_real = now();
             $orden->save();
 
             DB::commit();
 
-            // 5. Notificar a los operativos asignados
+            // 6. Notificar a los operativos asignados
             try {
                 $operativos = DB::table('ordenes_servicios_operativos')
                     ->join('ordenes_servicios', 'ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
@@ -599,14 +615,14 @@ class OrdenController extends Controller
 
                 foreach ($operativos as $opUser) {
                     MailerService::enviarCorreo(
-                        ['to' => [$opUser->email]],
+                    ['to' => [$opUser->email]],
                         "Orden #{$orden->id_orden} en ejecución",
                         'emails.orden_en_ejecucion',
-                        [
-                            'nombre' => $opUser->name,
-                            'id_orden' => $orden->id_orden,
-                            'fecha_inicio_real' => $orden->fecha_inicio_real->format('d/m/Y H:i')
-                        ]
+                    [
+                        'nombre' => $opUser->name,
+                        'id_orden' => $orden->id_orden,
+                        'fecha_inicio' => \Carbon\Carbon::parse($orden->fecha_inicio)->format('d/m/Y H:i')
+                    ]
                     );
 
                     NotificacionService::store([
@@ -615,13 +631,14 @@ class OrdenController extends Controller
                         'fecha_envio' => now()
                     ]);
                 }
-            } catch (\Exception $e) {
-                // Si falla la notificación, no queremos que la orden falle, solo loguearlo si es necesario
-                // \Illuminate\Support\Facades\Log::error('Error notificando a operativos: ' . $e->getMessage());
+            }
+            catch (\Exception $e) {
+            // Notificación fallida, solo loguear
             }
 
-            return $this->successResponse($orden, 'Orden puesta en ejecución correctamente. Inventario actualizado y notificaciones enviadas si corresponde.');
-        } catch (\Exception $e) {
+            return $this->successResponse($orden, 'Orden puesta en ejecución correctamente. Inventario actualizado y fechas reprogramadas.');
+        }
+        catch (\Exception $e) {
             DB::rollback();
             return $this->errorResponse('Error al poner en ejecución: ' . $e->getMessage(), 500);
         }

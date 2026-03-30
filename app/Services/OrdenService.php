@@ -126,4 +126,161 @@ class OrdenService
             ->get();
         return $ordenes;
     }
+
+    /**
+     * Reprograma una orden y todos sus sub-registros basándose en la fecha actual.
+     */
+    public static function reprogramarSegunEjecucion($id_orden)
+    {
+        $orden = Orden::find($id_orden);
+        if (!$orden || !$orden->fecha_inicio) return null;
+
+        $now = now();
+        $fechaInicioOriginal = \Carbon\Carbon::parse($orden->fecha_inicio);
+        
+        // 1. Diferencia inicial en días (manteniendo horas exactas)
+        $diffDays = $fechaInicioOriginal->diffInDays($now, false);
+        
+        // Ajuste: si diffInDays truncó, comparar fechas puras
+        $today = $now->copy()->startOfDay();
+        $originalDay = $fechaInicioOriginal->copy()->startOfDay();
+        $daysToAdd = $originalDay->diffInDays($today, false);
+
+        // 2. Ajuste Fino: Si la nueva fecha de inicio (hoy + hora original) es anterior a "ahora mismo", sumar 1 día más.
+        $nuevaFechaInicio = $fechaInicioOriginal->copy()->addDays($daysToAdd);
+        if ($nuevaFechaInicio->lt($now)) {
+            $daysToAdd += 1;
+        }
+
+        if ($daysToAdd == 0) return $orden; // No hay desfase
+
+        DB::beginTransaction();
+        try {
+            // Actualizar Orden
+            $orden->fecha_inicio = \Carbon\Carbon::parse($orden->fecha_inicio)->addDays($daysToAdd);
+            $orden->fecha_fin = $orden->fecha_fin ? \Carbon\Carbon::parse($orden->fecha_fin)->addDays($daysToAdd) : null;
+            $orden->save();
+
+            // Actualizar Servicios
+            DB::table('ordenes_servicios')->where('id_orden', $id_orden)->get()->each(function($os) use ($daysToAdd) {
+                DB::table('ordenes_servicios')->where('id_orden_servicio', $os->id_orden_servicio)->update([
+                    'fecha_inicio' => $os->fecha_inicio ? \Carbon\Carbon::parse($os->fecha_inicio)->addDays($daysToAdd) : null,
+                    'fecha_fin' => $os->fecha_fin ? \Carbon\Carbon::parse($os->fecha_fin)->addDays($daysToAdd) : null
+                ]);
+            });
+
+            // Actualizar Operativos asignados
+            DB::table('ordenes_servicios_operativos')
+                ->join('ordenes_servicios', 'ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+                ->where('ordenes_servicios.id_orden', $id_orden)
+                ->select('ordenes_servicios_operativos.id_orden_servicio_operativo', 'ordenes_servicios_operativos.fecha_inicio', 'ordenes_servicios_operativos.fecha_fin')
+                ->get()
+                ->each(function($oso) use ($daysToAdd) {
+                    DB::table('ordenes_servicios_operativos')
+                        ->where('id_orden_servicio_operativo', $oso->id_orden_servicio_operativo)
+                        ->update([
+                            'fecha_inicio' => $oso->fecha_inicio ? \Carbon\Carbon::parse($oso->fecha_inicio)->addDays($daysToAdd) : null,
+                            'fecha_fin' => $oso->fecha_fin ? \Carbon\Carbon::parse($oso->fecha_fin)->addDays($daysToAdd) : null
+                        ]);
+                });
+
+            // Actualizar Equipos asignados
+            DB::table('ordenes_servicios_equipos')
+                ->join('ordenes_servicios', 'ordenes_servicios_equipos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+                ->where('ordenes_servicios.id_orden', $id_orden)
+                ->select('ordenes_servicios_equipos.id_orden_servicio_equipo', 'ordenes_servicios_equipos.fecha_inicio', 'ordenes_servicios_equipos.fecha_fin')
+                ->get()
+                ->each(function($ose) use ($daysToAdd) {
+                    DB::table('ordenes_servicios_equipos')
+                        ->where('id_orden_servicio_equipo', $ose->id_orden_servicio_equipo)
+                        ->update([
+                            'fecha_inicio' => $ose->fecha_inicio ? \Carbon\Carbon::parse($ose->fecha_inicio)->addDays($daysToAdd) : null,
+                            'fecha_fin' => $ose->fecha_fin ? \Carbon\Carbon::parse($ose->fecha_fin)->addDays($daysToAdd) : null
+                        ]);
+                });
+
+            DB::commit();
+            return $orden;
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * Busca solapamientos de agenda para el personal y equipos asignados a esta orden.
+     */
+    public static function detectarConflictos($id_orden)
+    {
+        $conflictos = [
+            'operativos' => [],
+            'equipos' => []
+        ];
+
+        // 1. Obtener todas las asignaciones de la orden
+        $serviciosIds = DB::table('ordenes_servicios')->where('id_orden', $id_orden)->pluck('id_orden_servicio');
+        
+        $opAsignados = DB::table('ordenes_servicios_operativos')
+            ->whereIn('id_orden_servicio', $serviciosIds)
+            ->get();
+            
+        $eqAsignados = DB::table('ordenes_servicios_equipos')
+            ->whereIn('id_orden_servicio', $serviciosIds)
+            ->get();
+
+        // 2. Verificar traslapes para Operativos
+        foreach ($opAsignados as $asignacion) {
+            $overlaps = DB::table('ordenes_servicios_operativos')
+                ->join('ordenes_servicios', 'ordenes_servicios_operativos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+                ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+                ->join('operativos', 'ordenes_servicios_operativos.id_operativo', '=', 'operativos.id_operativo')
+                ->where('ordenes_servicios_operativos.id_operativo', $asignacion->id_operativo)
+                ->where('ordenes_servicios_operativos.id_orden_servicio_operativo', '!=', $asignacion->id_orden_servicio_operativo)
+                ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
+                ->where(function ($query) use ($asignacion) {
+                    $query->where('ordenes_servicios_operativos.fecha_inicio', '<', $asignacion->fecha_fin)
+                          ->where('ordenes_servicios_operativos.fecha_fin', '>', $asignacion->fecha_inicio);
+                })
+                ->select('ordenes.id_orden', 'operativos.nombre as operativo_nombre', 'ordenes_servicios_operativos.fecha_inicio', 'ordenes_servicios_operativos.fecha_fin')
+                ->get();
+
+            foreach ($overlaps as $overlap) {
+                $conflictos['operativos'][] = [
+                    'nombre' => $overlap->operativo_nombre,
+                    'id_orden_conflicto' => $overlap->id_orden,
+                    'desde' => $overlap->fecha_inicio,
+                    'hasta' => $overlap->fecha_fin
+                ];
+            }
+        }
+
+        // 3. Verificar traslapes para Equipos
+        foreach ($eqAsignados as $asignacion) {
+            $overlaps = DB::table('ordenes_servicios_equipos')
+                ->join('ordenes_servicios', 'ordenes_servicios_equipos.id_orden_servicio', '=', 'ordenes_servicios.id_orden_servicio')
+                ->join('ordenes', 'ordenes_servicios.id_orden', '=', 'ordenes.id_orden')
+                ->join('equipos', 'ordenes_servicios_equipos.id_equipo', '=', 'equipos.id_equipo')
+                ->join('tipos_equipos', 'equipos.id_tipo_equipo', '=', 'tipos_equipos.id_tipo_equipo')
+                ->where('ordenes_servicios_equipos.id_equipo', $asignacion->id_equipo)
+                ->where('ordenes_servicios_equipos.id_orden_servicio_equipo', '!=', $asignacion->id_orden_servicio_equipo)
+                ->whereIn('ordenes.estado', ['En espera', 'En ejecucion'])
+                ->where(function ($query) use ($asignacion) {
+                    $query->where('ordenes_servicios_equipos.fecha_inicio', '<', $asignacion->fecha_fin)
+                          ->where('ordenes_servicios_equipos.fecha_fin', '>', $asignacion->fecha_inicio);
+                })
+                ->select('ordenes.id_orden', 'tipos_equipos.nombre as equipo_nombre', 'equipos.modelo', 'ordenes_servicios_equipos.fecha_inicio', 'ordenes_servicios_equipos.fecha_fin')
+                ->get();
+
+            foreach ($overlaps as $overlap) {
+                $conflictos['equipos'][] = [
+                    'nombre' => $overlap->equipo_nombre . ' (' . $overlap->modelo . ')',
+                    'id_orden_conflicto' => $overlap->id_orden,
+                    'desde' => $overlap->fecha_inicio,
+                    'hasta' => $overlap->fecha_fin
+                ];
+            }
+        }
+
+        return $conflictos;
+    }
 }

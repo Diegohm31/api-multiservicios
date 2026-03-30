@@ -35,7 +35,6 @@ class Orden extends ApiModel
         'estado',
         'fecha_inicio',
         'fecha_fin',
-        'fecha_inicio_real',
         'fecha_fin_real',
         'fecha_emision',
         'fecha_validacion',
