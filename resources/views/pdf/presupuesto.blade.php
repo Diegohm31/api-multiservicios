@@ -172,6 +172,50 @@
             padding-top: 10px;
             line-height: 1.5;
         }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .service-title {
+            background-color: #2563eb;
+            color: #fff;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .detail-table th {
+            background-color: #f1f5f9;
+            border: 1px solid #ddd;
+            padding: 6px;
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .detail-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            font-size: 10px;
+        }
+
+        .subsection-title {
+            font-weight: bold;
+            color: #ef4444;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 
@@ -297,6 +341,96 @@
         Dirección: {{ $empresa->direccion }}<br>
         Correo Electrónico: {{ $empresa->correo }} | Teléfono: {{ $empresa->telefono }}
     </div>
+<!-- Páginas de Detalle -->
+    <div class="page-break"></div>
+    
+    <div class="header">
+        <h2 style="color: #2563eb; text-align: center; font-size: 18px; margin-top: 0;">Detalle de Componentes por Servicio</h2>
+    </div>
+
+    @foreach($servicios as $s)
+        <div class="service-title">
+            Servicio: {{ $s->nombre }} (Cant: {{ $s->cantidad }}) - Subtotal Servicio Unitario: ${{ number_format($s->precio_general_unitario, 2, ',', '.') }}
+        </div>
+
+        @if(isset($s->array_materiales) && count($s->array_materiales) > 0)
+        <div class="subsection-title">Materiales Requeridos</div>
+        <table class="detail-table">
+            <thead>
+                <tr>
+                    <th width="40%">Material</th>
+                    <th width="20%">Cantidad</th>
+                    <th width="20%">Costo Unitario</th>
+                    <th width="20%">Subtotal Unitario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($s->array_materiales as $mat)
+                <tr>
+                    <td class="text-center">{{ $mat->nombre }}</td>
+                    <td class="text-center">{{ $mat->cantidad_orden_servicio_material }}</td>
+                    <td class="text-center">${{ number_format($mat->precio_unitario, 2, ',', '.') }}</td>
+                    <td class="text-center">${{ number_format($mat->cantidad_orden_servicio_material * $mat->precio_unitario, 2, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
+
+        @if(isset($s->array_tipos_equipos) && count($s->array_tipos_equipos) > 0)
+        <div class="subsection-title">Equipos Requeridos</div>
+        <table class="detail-table">
+            <thead>
+                <tr>
+                    <th width="30%">Tipo de Equipo</th>
+                    <th width="15%">Cantidad</th>
+                    <th width="20%">Horas de Uso</th>
+                    <th width="15%">Costo / Hora</th>
+                    <th width="20%">Subtotal Unitario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($s->array_tipos_equipos as $eq)
+                <tr>
+                    <td class="text-center">{{ $eq->nombre }}</td>
+                    <td class="text-center">{{ $eq->cantidad_orden_servicio_tipo_equipo }}</td>
+                    <td class="text-center">{{ $eq->horas_uso }} hrs</td>
+                    <td class="text-center">${{ number_format($eq->costo_hora, 2, ',', '.') }}</td>
+                    <td class="text-center">${{ number_format($eq->cantidad_orden_servicio_tipo_equipo * $eq->horas_uso * $eq->costo_hora, 2, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
+
+        @if(isset($s->array_especialidades) && count($s->array_especialidades) > 0)
+        <div class="subsection-title">Mano de Obra (Especialidades)</div>
+        <table class="detail-table">
+            <thead>
+                <tr>
+                    <th width="30%">Especialidad</th>
+                    <th width="15%">Cantidad Pers.</th>
+                    <th width="20%">Horas Hombre</th>
+                    <th width="15%">Tarifa / Hora</th>
+                    <th width="20%">Subtotal Unitario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($s->array_especialidades as $esp)
+                <tr>
+                    <td class="text-center">{{ $esp->nombre }} (Nivel: {{ $esp->nivel }})</td>
+                    <td class="text-center">{{ $esp->cantidad_orden_servicio_especialidad }}</td>
+                    <td class="text-center">{{ $esp->horas_hombre }} hrs</td>
+                    <td class="text-center">${{ number_format($esp->tarifa_hora, 2, ',', '.') }}</td>
+                    <td class="text-center">${{ number_format($esp->cantidad_orden_servicio_especialidad * $esp->horas_hombre * $esp->tarifa_hora, 2, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @endif
+        
+    @endforeach
+
 </body>
 
 </html>

@@ -78,6 +78,11 @@ class PresupuestoController extends Controller
                 $ordenServicio->precio_a_pagar = $servicioItem['precio_a_pagar'];
                 $ordenServicio->save();
 
+                // Eliminar registros previos de pivotes
+                \Illuminate\Support\Facades\DB::table('ordenes_servicios_materiales')->where('id_orden_servicio', $ordenServicio->id_orden_servicio)->delete();
+                \Illuminate\Support\Facades\DB::table('ordenes_servicios_tipos_equipos')->where('id_orden_servicio', $ordenServicio->id_orden_servicio)->delete();
+                \Illuminate\Support\Facades\DB::table('ordenes_servicios_especialidades')->where('id_orden_servicio', $ordenServicio->id_orden_servicio)->delete();
+
                 // guardar registros en la tabla ordenes_servicios_materiales si existe el array_materiales
                 if (isset($servicioItem['array_materiales'])) {
                     foreach ($servicioItem['array_materiales'] as $material) {
@@ -148,6 +153,13 @@ class PresupuestoController extends Controller
         // Generar PDF automáticamente (Ahora que la orden y servicios están vinculados)
         $empresa = \App\Models\Empresa::first();
         $serviciosPDF = OrdenServicioService::getOneByOrden($orden->id_orden);
+
+        foreach ($serviciosPDF as $servicioPDF) {
+            $servicioPDF->array_materiales = OrdenServicioMaterialService::getOneByServicio($servicioPDF->id_orden_servicio);
+            $servicioPDF->array_tipos_equipos = OrdenServicioTipoEquipoService::getOneByServicio($servicioPDF->id_orden_servicio);
+            $servicioPDF->array_especialidades = OrdenServicioEspecialidadService::getOneByServicio($servicioPDF->id_orden_servicio);
+        }
+
         $pdfPath = PDFService::generarPresupuestoPDF($presupuesto, $orden, $cliente, $empresa, $serviciosPDF);
         if ($pdfPath) {
             $presupuesto->pdf_factura = $pdfPath;
