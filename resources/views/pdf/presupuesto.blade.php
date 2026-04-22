@@ -297,12 +297,12 @@
                             <br><span style="color: #666; font-size: 9px;">{{ $s->descripcion }}</span>
                         @endif
                     </td>
-                    <td class="text-right">${{ number_format($s->precio_general_unitario, 2, ',', '.') }}</td>
+                    <td class="text-right">Bs. {{ number_format($s->precio_general_unitario, 2, ',', '.') }}</td>
                     <td class="text-center">{{ number_format($s->porcentaje_descuento, 0) }}%</td>
-                    <td class="text-right">${{ number_format($s->descuento_unitario, 2, ',', '.') }}</td>
-                    <td class="text-right">${{ number_format($s->precio_neto_unitario, 2, ',', '.') }}</td>
+                    <td class="text-right">Bs. {{ number_format($s->descuento_unitario, 2, ',', '.') }}</td>
+                    <td class="text-right">Bs. {{ number_format($s->precio_neto_unitario, 2, ',', '.') }}</td>
                     <td class="text-center">{{ $s->cantidad }}</td>
-                    <td class="text-right">${{ number_format($s->precio_a_pagar, 2, ',', '.') }}</td>
+                    <td class="text-right">Bs. {{ number_format($s->precio_a_pagar, 2, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -313,24 +313,24 @@
             <table>
                 <tr>
                     <td>TOTAL GENERAL:</td>
-                    <td class="text-right">${{ number_format($presupuesto->total_general, 2, ',', '.') }}</td>
+                    <td class="text-right">Bs. {{ number_format($presupuesto->total_general, 2, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <td>TOTAL DESCUENTO (-):</td>
-                    <td class="text-right">${{ number_format($presupuesto->total_descuento, 2, ',', '.') }}</td>
+                    <td class="text-right">Bs. {{ number_format($presupuesto->total_descuento, 2, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <td class="total-label">SUB-TOTAL:</td>
-                    <td class="total-value">${{ number_format($presupuesto->sub_total, 2, ',', '.') }}</td>
+                    <td class="total-value">Bs. {{ number_format($presupuesto->sub_total, 2, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <td>I.V.A ({{ $presupuesto->porcentaje_iva }}%):</td>
-                    <td class="text-right">${{ number_format($presupuesto->iva, 2, ',', '.') }}</td>
+                    <td class="text-right">Bs. {{ number_format($presupuesto->iva, 2, ',', '.') }}</td>
                 </tr>
                 <tr class="grand-total">
                     <td class="total-label">TOTAL A PAGAR:</td>
                     <td class="total-value">
-                        ${{ number_format($presupuesto->total_a_pagar, 2, ',', '.') }}</td>
+                        Bs. {{ number_format($presupuesto->total_a_pagar, 2, ',', '.') }}</td>
                 </tr>
             </table>
         </div>
@@ -350,7 +350,7 @@
 
     @foreach($servicios as $s)
         <div class="service-title">
-            Servicio: {{ $s->nombre }} (Cant: {{ $s->cantidad }}) - Subtotal Servicio Unitario: ${{ number_format($s->precio_general_unitario, 2, ',', '.') }}
+            Servicio: {{ $s->nombre }} (Cant: {{ $s->cantidad }}) - Subtotal Servicio Unitario: Bs. {{ number_format($s->precio_general_unitario, 2, ',', '.') }}
         </div>
 
         @if(isset($s->array_materiales) && count($s->array_materiales) > 0)
@@ -369,8 +369,8 @@
                 <tr>
                     <td class="text-center">{{ $mat->nombre }}</td>
                     <td class="text-center">{{ $mat->cantidad_orden_servicio_material }}</td>
-                    <td class="text-center">${{ number_format($mat->precio_unitario, 2, ',', '.') }}</td>
-                    <td class="text-center">${{ number_format($mat->cantidad_orden_servicio_material * $mat->precio_unitario, 2, ',', '.') }}</td>
+                    <td class="text-center">Bs. {{ number_format($mat->precio_unitario, 2, ',', '.') }}</td>
+                    <td class="text-center">Bs. {{ number_format($mat->cantidad_orden_servicio_material * $mat->precio_unitario, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -395,8 +395,8 @@
                     <td class="text-center">{{ $eq->nombre }}</td>
                     <td class="text-center">{{ $eq->cantidad_orden_servicio_tipo_equipo }}</td>
                     <td class="text-center">{{ $eq->horas_uso }} hrs</td>
-                    <td class="text-center">${{ number_format($eq->costo_hora, 2, ',', '.') }}</td>
-                    <td class="text-center">${{ number_format($eq->cantidad_orden_servicio_tipo_equipo * $eq->horas_uso * $eq->costo_hora, 2, ',', '.') }}</td>
+                    <td class="text-center">Bs. {{ number_format($eq->costo_hora, 2, ',', '.') }}</td>
+                    <td class="text-center">Bs. {{ number_format($eq->cantidad_orden_servicio_tipo_equipo * $eq->horas_uso * $eq->costo_hora, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -421,8 +421,8 @@
                     <td class="text-center">{{ $esp->nombre }} (Nivel: {{ $esp->nivel }})</td>
                     <td class="text-center">{{ $esp->cantidad_orden_servicio_especialidad }}</td>
                     <td class="text-center">{{ $esp->horas_hombre }} hrs</td>
-                    <td class="text-center">${{ number_format($esp->tarifa_hora, 2, ',', '.') }}</td>
-                    <td class="text-center">${{ number_format($esp->cantidad_orden_servicio_especialidad * $esp->horas_hombre * $esp->tarifa_hora, 2, ',', '.') }}</td>
+                    <td class="text-center">Bs. {{ number_format($esp->tarifa_hora, 2, ',', '.') }}</td>
+                    <td class="text-center">Bs. {{ number_format($esp->cantidad_orden_servicio_especialidad * $esp->horas_hombre * $esp->tarifa_hora, 2, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
