@@ -41,6 +41,16 @@ class Orden extends ApiModel
         'observaciones',
         'calificacion',
         'pdf_peritaje',
-        'findes_laborables'
+        'findes_laborables',
+        'estado_last_update'
     ];
+
+    protected static function booted()
+    {
+        static::saving(function ($orden) {
+            if (!$orden->exists || $orden->isDirty('estado')) {
+                $orden->estado_last_update = now();
+            }
+        });
+    }
 }

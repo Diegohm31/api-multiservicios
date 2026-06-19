@@ -25,7 +25,8 @@ class OrdenService
             ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
             ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula', 'planes_membresias.imagePath as plan_image_path', 'planes_membresias.nombre as active_plan_nombre')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
-            ->orderBy('ordenes.id_orden', 'asc')
+            ->orderByDesc('ordenes.estado_last_update')
+            ->orderByDesc('ordenes.id_orden')
             ->get();
         return $ordenes;
     }
@@ -85,7 +86,8 @@ class OrdenService
         $ordenes = Orden::where('id_cliente', $id_cliente)
             ->select('*')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
-            ->orderBy('ordenes.id_orden', 'asc')
+            ->orderByDesc('ordenes.estado_last_update')
+            ->orderByDesc('ordenes.id_orden')
             ->get();
         return $ordenes;
     }
@@ -122,7 +124,8 @@ class OrdenService
             ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula', 'planes_membresias.imagePath as plan_image_path', 'planes_membresias.nombre as active_plan_nombre')
             ->selectSub($porcentajeSub, 'porcentaje_avance')
             ->selectSub($ingresoSub, 'ingreso_operativo')
-            ->orderBy('ordenes.id_orden', 'asc')
+            ->orderByDesc('ordenes.estado_last_update')
+            ->orderByDesc('ordenes.id_orden')
             ->distinct()
             ->get();
         return $ordenes;
