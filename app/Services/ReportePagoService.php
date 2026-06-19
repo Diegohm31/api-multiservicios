@@ -30,7 +30,8 @@ class ReportePagoService
                 'p_activa.imagePath as active_plan_image_path',
                 'p_activa.nombre as active_plan_nombre'
             )
-            ->orderBy('reportes_pagos.id_reporte_pago', 'asc')
+            ->orderByRaw("CASE WHEN reportes_pagos.estado = 'Pendiente' THEN 1 ELSE 2 END ASC")
+            ->orderBy('reportes_pagos.fecha_emision', 'desc')
             ->get();
         return $reportes_pagos;
     }
@@ -45,7 +46,8 @@ class ReportePagoService
             ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
             ->select('reportes_pagos.*', 'clientes.nombre as cliente_nombre', 'clientes.cedula as cliente_cedula', 'admins.nombre as admin_nombre', 'ordenes.id_orden as orden_id_orden', 'planes_membresias.nombre as plan_membresia_nombre')
             ->where('reportes_pagos.id_cliente', $id_cliente)
-            ->orderBy('reportes_pagos.id_reporte_pago', 'asc')
+            ->orderByRaw("CASE WHEN reportes_pagos.estado = 'Pendiente' THEN 1 ELSE 2 END ASC")
+            ->orderBy('reportes_pagos.fecha_emision', 'desc')
             ->get();
         return $reportes_pagos;
     }
