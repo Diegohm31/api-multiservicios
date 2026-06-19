@@ -30,7 +30,7 @@ use App\Models\Operativo;
 use App\Models\OrdenServicio;
 use App\Models\OrdenServicioOperativo;
 use App\Models\OrdenServicioEquipo;
-use App\Services\AvanceOrdenService;
+use App\Services\AvanceOrdenServicioService;
 use App\Services\OperativoService;
 
 class OrdenController extends Controller
@@ -685,11 +685,11 @@ class OrdenController extends Controller
             return $this->errorResponse('Orden no encontrada', 404);
         }
 
-        $avancesOrden = AvanceOrdenService::getAllByOrden($id);
+        $avancesOrden = AvanceOrdenServicioService::getAllByOrden($id);
 
         return $this->successResponse([
             'orden' => $orden,
-            'avances_orden' => $avancesOrden
-        ], 'Avances de la orden obtenidos correctamente');
+            'avances' => $avancesOrden
+        ], 'Avances obtenidos correctamente');
     }
 }

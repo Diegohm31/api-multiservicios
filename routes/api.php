@@ -25,7 +25,7 @@ use App\Http\Controllers\OrdenServicioController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\ReportePagoController;
 use App\Http\Controllers\NotificacionController;
-use App\Http\Controllers\AvanceOrdenController;
+use App\Http\Controllers\AvanceOrdenServicioController;
 use App\Http\Controllers\PlanMembresiaController;
 use App\Http\Controllers\PlanMembresiaTipoServicioController;
 use App\Http\Controllers\MembresiaController;
@@ -89,7 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'presupuestos' => PresupuestoController::class,
         'reportes-pagos' => ReportePagoController::class,
         'notificaciones' => NotificacionController::class,
-        'avances-ordenes' => AvanceOrdenController::class,
+        'avances-ordenes-servicios' => AvanceOrdenServicioController::class,
         'membresias' => MembresiaController::class,
         'planes-membresias-tipos-servicios' => PlanMembresiaTipoServicioController::class,
         'cuentas-bancarias' => CuentaBancariaController::class,

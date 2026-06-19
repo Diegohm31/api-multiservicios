@@ -8,11 +8,6 @@ class OrdenService
 {
     public static function getAll()
     {
-        // Subconsulta para el porcentaje de avance
-        $porcentajeSub = DB::table('avances_ordenes')
-            ->selectRaw('COALESCE(SUM(porcentaje_avance), 0)')
-            ->whereColumn('avances_ordenes.id_orden', 'ordenes.id_orden')
-            ->where('is_deleted', false);
 
         //join con tabla clientes para obtener el nombre y cedula del cliente
         //join con membresias y planes para obtener el icono si tiene membresia activa
@@ -24,7 +19,7 @@ class OrdenService
         })
             ->leftJoin('planes_membresias', 'membresias.id_plan_membresia', '=', 'planes_membresias.id_plan_membresia')
             ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula', 'planes_membresias.imagePath as plan_image_path', 'planes_membresias.nombre as active_plan_nombre')
-            ->selectSub($porcentajeSub, 'porcentaje_avance')
+            ->addSelect('ordenes.porcentaje_avance_global as porcentaje_avance')
             ->orderByDesc('ordenes.estado_last_update')
             ->orderByDesc('ordenes.id_orden')
             ->get();
@@ -78,14 +73,10 @@ class OrdenService
 
     public static function getOrdenesByCliente($id_cliente)
     {
-        $porcentajeSub = DB::table('avances_ordenes')
-            ->selectRaw('COALESCE(SUM(porcentaje_avance), 0)')
-            ->whereColumn('avances_ordenes.id_orden', 'ordenes.id_orden')
-            ->where('is_deleted', false);
 
         $ordenes = Orden::where('id_cliente', $id_cliente)
             ->select('*')
-            ->selectSub($porcentajeSub, 'porcentaje_avance')
+            ->addSelect('ordenes.porcentaje_avance_global as porcentaje_avance')
             ->orderByDesc('ordenes.estado_last_update')
             ->orderByDesc('ordenes.id_orden')
             ->get();
@@ -94,10 +85,6 @@ class OrdenService
 
     public static function getOrdenesByOperativo($id_operativo)
     {
-        $porcentajeSub = DB::table('avances_ordenes')
-            ->selectRaw('COALESCE(SUM(porcentaje_avance), 0)')
-            ->whereColumn('avances_ordenes.id_orden', 'ordenes.id_orden')
-            ->where('is_deleted', false);
 
         // Subconsulta para calcular el ingreso acumulado del operativo en la orden
         $ingresoSub = DB::table('ordenes_servicios')
@@ -122,7 +109,7 @@ class OrdenService
             ->where('ordenes_servicios_operativos.id_operativo', $id_operativo)
             ->whereIn('ordenes.estado', ['En espera', 'En ejecucion', 'Completada'])
             ->select('ordenes.*', 'clientes.nombre', 'clientes.cedula', 'planes_membresias.imagePath as plan_image_path', 'planes_membresias.nombre as active_plan_nombre')
-            ->selectSub($porcentajeSub, 'porcentaje_avance')
+            ->addSelect('ordenes.porcentaje_avance_global as porcentaje_avance')
             ->selectSub($ingresoSub, 'ingreso_operativo')
             ->orderByDesc('ordenes.estado_last_update')
             ->orderByDesc('ordenes.id_orden')
