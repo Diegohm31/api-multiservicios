@@ -41,6 +41,7 @@ class PresupuestoController extends Controller
             'sub_total' => 'required|numeric',
             'porcentaje_iva' => 'required|numeric',
             'iva' => 'required|numeric',
+            'costo_traslado' => 'required|numeric',
             'total_a_pagar' => 'required|numeric',
             'array_servicios' => 'required|array',
             'array_servicios.*.array_especialidades' => 'required|array|min:1',
@@ -192,6 +193,7 @@ class PresupuestoController extends Controller
             'sub_total' => 'nullable|numeric',
             'porcentaje_iva' => 'nullable|numeric',
             'iva' => 'nullable|numeric',
+            'costo_traslado' => 'nullable|numeric',
             'total_a_pagar' => 'nullable|numeric',
             'pdf_factura' => 'nullable|string|max:1000',
             'estado' => 'nullable|string|max:50',
@@ -199,7 +201,7 @@ class PresupuestoController extends Controller
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('id_admin') && !$request->has('total_materiales') && !$request->has('total_equipos') && !$request->has('total_mano_obra') && !$request->has('total_general') && !$request->has('total_descuento') && !$request->has('sub_total') && !$request->has('porcentaje_iva') && !$request->has('iva') && !$request->has('total_a_pagar') && !$request->has('pdf_factura') && !$request->has('estado') && !$request->has('fecha_emision')) {
+        if (!$request->has('id_admin') && !$request->has('total_materiales') && !$request->has('total_equipos') && !$request->has('total_mano_obra') && !$request->has('total_general') && !$request->has('total_descuento') && !$request->has('sub_total') && !$request->has('porcentaje_iva') && !$request->has('iva') && !$request->has('costo_traslado') && !$request->has('total_a_pagar') && !$request->has('pdf_factura') && !$request->has('estado') && !$request->has('fecha_emision')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();

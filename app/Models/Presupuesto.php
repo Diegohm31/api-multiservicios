@@ -37,6 +37,7 @@ class Presupuesto extends ApiModel
         'sub_total',
         'porcentaje_iva',
         'iva',
+        'costo_traslado',
         'total_a_pagar',
         'pdf_factura',
         'estado',

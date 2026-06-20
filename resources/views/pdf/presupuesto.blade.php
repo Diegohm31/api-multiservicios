@@ -327,6 +327,10 @@
                     <td>I.V.A ({{ $presupuesto->porcentaje_iva }}%):</td>
                     <td class="text-right">Bs. {{ number_format($presupuesto->iva, 2, ',', '.') }}</td>
                 </tr>
+                <tr>
+                    <td>COSTO DE TRASLADO (+):</td>
+                    <td class="text-right">Bs. {{ number_format($presupuesto->costo_traslado, 2, ',', '.') }}</td>
+                </tr>
                 <tr class="grand-total">
                     <td class="total-label">TOTAL A PAGAR:</td>
                     <td class="total-value">
