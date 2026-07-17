@@ -57,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/presupuestos/{id}/aceptar', [PresupuestoController::class, 'aceptarPresupuesto']);
     Route::put('/presupuestos/{id}/cancelar', [PresupuestoController::class, 'cancelarPresupuesto']);
-    Route::post('/ordenes/{id}/subir-peritaje', [OrdenController::class, 'subirPeritaje']);
+    Route::post('/ordenes/{id}/peritaje', [OrdenController::class, 'generarPeritaje']);
     Route::put('/ordenes/{id}/asignar-personal', [OrdenController::class, 'asignarPersonal']);
     Route::get('/ordenes/{id}/asignar-personal', [OrdenController::class, 'getOneOrdenAsignarPersonal']);
     Route::get('/get-all-asignaciones', [OrdenController::class, 'getAllAsignaciones']);

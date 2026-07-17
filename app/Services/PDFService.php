@@ -40,4 +40,24 @@ class PDFService
             return null;
         }
     }
+    public static function generarPeritajePDF($orden, $servicios)
+    {
+        $data = [
+            'orden' => $orden,
+            'servicios' => $servicios
+        ];
+
+        $pdf = Pdf::loadView('pdf.peritaje', $data);
+
+        $filename = 'peritaje_' . $orden->id_orden . '_' . time() . '.pdf';
+        $path = 'peritajes/' . $filename;
+
+        try {
+            Storage::disk('public')->put($path, $pdf->output());
+            return $path;
+        } catch (\Exception $e) {
+            \Log::error('Error generating Peritaje PDF: ' . $e->getMessage());
+            return null;
+        }
+    }
 }

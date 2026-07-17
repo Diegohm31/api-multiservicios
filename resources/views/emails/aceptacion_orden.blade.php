@@ -14,6 +14,8 @@
         @if ($observaciones)
             <p>Observaciones: {{ $observaciones }}</p>
         @endif
+        <p>Se ha programado la visita de peritaje para el día: <strong>{{ \Carbon\Carbon::parse($fecha_peritaje)->format('d/m/Y h:i A') }}</strong>.</p>
+        <p style="font-size: 13px; color: #555;">Si no estás de acuerdo con esta fecha o prefieres otra, puedes responder a este correo indicando la fecha de tu preferencia.</p>
         <p style="margin-top: 30px; font-size: 14px; color: #666;">Gracias por confiar en nosotros.</p>
     </div>
 </body>

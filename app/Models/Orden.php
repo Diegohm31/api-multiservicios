@@ -38,6 +38,7 @@ class Orden extends ApiModel
         'fecha_fin_real',
         'fecha_emision',
         'fecha_validacion',
+        'fecha_peritaje',
         'observaciones',
         'calificacion',
         'pdf_peritaje',

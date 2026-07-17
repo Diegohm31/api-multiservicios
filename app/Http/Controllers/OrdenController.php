@@ -32,6 +32,7 @@ use App\Models\OrdenServicioOperativo;
 use App\Models\OrdenServicioEquipo;
 use App\Services\AvanceOrdenServicioService;
 use App\Services\OperativoService;
+use App\Services\PDFService;
 
 class OrdenController extends Controller
 {
@@ -142,10 +143,37 @@ class OrdenController extends Controller
         if ($detalle) {
             foreach ($orden->array_servicios as $servicio) {
                 $servicio_tabulado = ServicioService::esTabulado($servicio->id_servicio);
-                if ($servicio_tabulado) {
+                
+                $materiales_peritaje = DB::table('ordenes_servicios_materiales')
+                    ->join('materiales', 'ordenes_servicios_materiales.id_material', '=', 'materiales.id_material')
+                    ->where('ordenes_servicios_materiales.id_orden_servicio', $servicio->id_orden_servicio)
+                    ->select('materiales.*', 'ordenes_servicios_materiales.cantidad as cantidad_servicio')
+                    ->get();
+                
+                $equipos_peritaje = DB::table('ordenes_servicios_tipos_equipos')
+                    ->join('tipos_equipos', 'ordenes_servicios_tipos_equipos.id_tipo_equipo', '=', 'tipos_equipos.id_tipo_equipo')
+                    ->where('ordenes_servicios_tipos_equipos.id_orden_servicio', $servicio->id_orden_servicio)
+                    ->select('tipos_equipos.*', 'ordenes_servicios_tipos_equipos.cantidad as cantidad_servicio', 'ordenes_servicios_tipos_equipos.horas_uso')
+                    ->get();
+
+                $especialidades_peritaje = DB::table('ordenes_servicios_especialidades')
+                    ->join('especialidades', 'ordenes_servicios_especialidades.id_especialidad', '=', 'especialidades.id_especialidad')
+                    ->where('ordenes_servicios_especialidades.id_orden_servicio', $servicio->id_orden_servicio)
+                    ->select('especialidades.*', 'ordenes_servicios_especialidades.cantidad as cantidad_servicio', 'ordenes_servicios_especialidades.horas_hombre')
+                    ->get();
+
+                if (count($materiales_peritaje) > 0 || count($equipos_peritaje) > 0 || count($especialidades_peritaje) > 0) {
+                    $servicio->array_materiales = $materiales_peritaje;
+                    $servicio->array_tipos_equipos = $equipos_peritaje;
+                    $servicio->array_especialidades = $especialidades_peritaje;
+                } else if ($servicio_tabulado) {
                     $servicio->array_materiales = ServicioMaterialService::getOneByServicio($servicio->id_servicio);
                     $servicio->array_tipos_equipos = ServicioTipoEquipoService::getOneByServicio($servicio->id_servicio);
                     $servicio->array_especialidades = ServicioEspecialidadService::getOneByServicio($servicio->id_servicio);
+                } else {
+                    $servicio->array_materiales = [];
+                    $servicio->array_tipos_equipos = [];
+                    $servicio->array_especialidades = [];
                 }
             }
         }
@@ -225,16 +253,35 @@ class OrdenController extends Controller
             'observaciones' => 'nullable|string|max:1000',
             'calificacion' => 'nullable|int|max:5',
             'pdf_peritaje' => 'nullable|string|max:1000',
+            'fecha_peritaje' => 'nullable|date',
         ]);
 
         // validar que al menos un campo sea modificado
-        if (!$request->has('id_cliente') && !$request->has('id_admin') && !$request->has('id_presupuesto') && !$request->has('direccion') && !$request->has('estado') && !$request->has('fecha_inicio') && !$request->has('fecha_fin') && !$request->has('fecha_inicio_real') && !$request->has('fecha_fin_real') && !$request->has('fecha_emision') && !$request->has('fecha_validacion') && !$request->has('observaciones') && !$request->has('calificacion') && !$request->has('pdf_peritaje')) {
+        if (!$request->has('id_cliente') && !$request->has('id_admin') && !$request->has('id_presupuesto') && !$request->has('direccion') && !$request->has('estado') && !$request->has('fecha_inicio') && !$request->has('fecha_fin') && !$request->has('fecha_inicio_real') && !$request->has('fecha_fin_real') && !$request->has('fecha_emision') && !$request->has('fecha_validacion') && !$request->has('observaciones') && !$request->has('calificacion') && !$request->has('pdf_peritaje') && !$request->has('fecha_peritaje')) {
             return $this->errorResponse('Al menos un campo debe ser modificado', 400);
         }
         $data = $request->all();
         $orden = OrdenService::update($id, $data);
         if (!$orden) {
             return $this->errorResponse('Orden no encontrada', 404);
+        }
+
+        if ($request->has('fecha_peritaje')) {
+            $cliente = ClienteService::getOne($orden->id_cliente);
+            if ($cliente) {
+                $userCliente = User::find($cliente->id_user);
+                if ($userCliente) {
+                    MailerService::enviarCorreo([
+                        'to' => [$userCliente->email],
+                        'cc' => [],
+                        'bcc' => [],
+                    ], 'Actualización de Fecha de Peritaje', 'emails.actualizacion_fecha_peritaje', [
+                        'nombre' => $userCliente->name,
+                        'id_orden' => $orden->id_orden,
+                        'fecha_peritaje' => $request->fecha_peritaje
+                    ]);
+                }
+            }
         }
 
         if ($request->has('calificacion')) {
@@ -313,6 +360,7 @@ class OrdenController extends Controller
     {
         $request->validate([
             'observaciones' => 'nullable|string|max:1000',
+            'fecha_peritaje' => 'required|date',
         ]);
 
         $data = $request->all();
@@ -323,6 +371,7 @@ class OrdenController extends Controller
         }
         $orden->estado = 'Aceptada';
         $orden->fecha_validacion = date('Y-m-d H:i:s');
+        $orden->fecha_peritaje = $data['fecha_peritaje'];
         $orden->observaciones = $data['observaciones'] ?? null;
         $orden->save();
 
@@ -335,7 +384,7 @@ class OrdenController extends Controller
             'to' => [$user->email],
             'cc' => [],
             'bcc' => [],
-        ], 'Orden aceptada', 'emails.aceptacion_orden', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'observaciones' => $orden->observaciones]);
+        ], 'Orden aceptada', 'emails.aceptacion_orden', ['nombre' => $user->name, 'id_orden' => $orden->id_orden, 'observaciones' => $orden->observaciones, 'fecha_peritaje' => $orden->fecha_peritaje]);
 
         //grabar registro en la tabla notificaciones
         $notificacion = NotificacionService::store([
@@ -384,34 +433,107 @@ class OrdenController extends Controller
         return $this->successResponse($orden, 'Orden completada correctamente');
     }
 
-    public function subirPeritaje(Request $request, $id)
+    public function generarPeritaje(Request $request, $id)
     {
         $request->validate([
-            'pdf_peritaje' => 'required|file|mimes:pdf|max:10240', // max 10MB
+            'array_servicios' => 'required|array',
         ]);
+
+        $data = $request->all();
 
         $orden = OrdenService::getOne($id);
         if (!$orden) {
             return $this->errorResponse('Orden no encontrada', 404);
         }
 
-        if ($request->hasFile('pdf_peritaje')) {
-            // Eliminar archivo anterior si existe
-            if ($orden->pdf_peritaje) {
-                Storage::disk('public')->delete($orden->pdf_peritaje);
+        DB::beginTransaction();
+        try {
+            // Guardar registros en tablas pivote para cada servicio
+            foreach ($data['array_servicios'] as $servicioItem) {
+                $ordenServicio = OrdenServicioService::getOne($servicioItem['id_orden_servicio']);
+
+                if ($ordenServicio) {
+                    // Eliminar registros previos de pivotes
+                    \Illuminate\Support\Facades\DB::table('ordenes_servicios_materiales')->where('id_orden_servicio', $ordenServicio->id_orden_servicio)->delete();
+                    \Illuminate\Support\Facades\DB::table('ordenes_servicios_tipos_equipos')->where('id_orden_servicio', $ordenServicio->id_orden_servicio)->delete();
+                    \Illuminate\Support\Facades\DB::table('ordenes_servicios_especialidades')->where('id_orden_servicio', $ordenServicio->id_orden_servicio)->delete();
+
+                    // guardar registros en la tabla ordenes_servicios_materiales
+                    if (isset($servicioItem['array_materiales'])) {
+                        foreach ($servicioItem['array_materiales'] as $material) {
+                            $registro = [
+                                'id_orden_servicio' => $ordenServicio->id_orden_servicio,
+                                'id_material' => $material['id_material'],
+                                'cantidad' => $material['cantidad'],
+                                'precio_unitario' => 0, // En el peritaje no hay precios
+                            ];
+                            OrdenServicioMaterialService::store($registro);
+                        }
+                    }
+
+                    // guardar registros en la tabla ordenes_servicios_tipos_equipos
+                    if (isset($servicioItem['array_tipos_equipos'])) {
+                        foreach ($servicioItem['array_tipos_equipos'] as $tipo_equipo) {
+                            $registro = [
+                                'id_orden_servicio' => $ordenServicio->id_orden_servicio,
+                                'id_tipo_equipo' => $tipo_equipo['id_tipo_equipo'],
+                                'cantidad' => $tipo_equipo['cantidad'],
+                                'horas_uso' => $tipo_equipo['horas_uso'],
+                                'costo_hora' => 0, // En el peritaje no hay precios
+                            ];
+                            OrdenServicioTipoEquipoService::store($registro);
+                        }
+                    }
+
+                    // guardar registros en la tabla ordenes_servicios_especialidades
+                    if (!isset($servicioItem['array_especialidades']) || count($servicioItem['array_especialidades']) == 0) {
+                        return $this->errorResponse("Debe asignar al menos una Mano de Obra (Especialidad) a cada servicio.", 400);
+                    }
+                    if (isset($servicioItem['array_especialidades'])) {
+                        foreach ($servicioItem['array_especialidades'] as $especialidad) {
+                            $registro = [
+                                'id_orden_servicio' => $ordenServicio->id_orden_servicio,
+                                'id_especialidad' => $especialidad['id_especialidad'],
+                                'cantidad' => $especialidad['cantidad'],
+                                'horas_hombre' => $especialidad['horas_hombre'],
+                                'tarifa_hora' => 0, // En el peritaje no hay precios
+                            ];
+                            OrdenServicioEspecialidadService::store($registro);
+                        }
+                    }
+                }
             }
 
-            $file = $request->file('pdf_peritaje');
-            $filename = 'peritaje_' . $orden->id_orden . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('peritajes', $filename, 'public');
+            DB::commit();
 
-            $orden->pdf_peritaje = $path;
-            $orden->save();
+            // Generar PDF
+            $serviciosPDF = OrdenServicioService::getOneByOrden($orden->id_orden);
+            foreach ($serviciosPDF as $servicioPDF) {
+                $servicioPDF->array_materiales = OrdenServicioMaterialService::getOneByServicio($servicioPDF->id_orden_servicio);
+                $servicioPDF->array_tipos_equipos = OrdenServicioTipoEquipoService::getOneByServicio($servicioPDF->id_orden_servicio);
+                $servicioPDF->array_especialidades = OrdenServicioEspecialidadService::getOneByServicio($servicioPDF->id_orden_servicio);
+            }
 
-            return $this->successResponse($orden, 'Archivo de peritaje subido correctamente');
+            $pdfPath = PDFService::generarPeritajePDF($orden, $serviciosPDF);
+            
+            if ($pdfPath) {
+                // Eliminar archivo anterior si existe
+                if ($orden->pdf_peritaje) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($orden->pdf_peritaje);
+                }
+
+                $orden->pdf_peritaje = $pdfPath;
+                $orden->save();
+                
+                return $this->successResponse($orden, 'Peritaje generado y guardado correctamente');
+            } else {
+                return $this->errorResponse('No se pudo generar el PDF del peritaje', 500);
+            }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->errorResponse('Error al generar el peritaje: ' . $e->getMessage(), 500);
         }
-
-        return $this->errorResponse('No se pudo subir el archivo', 400);
     }
 
     public function getOneOrdenAsignarPersonal($id)
